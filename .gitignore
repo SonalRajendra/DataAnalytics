@@ -3,3 +3,4 @@
 *.ipynb
 main.py
 .aimodel
+*.pyc
