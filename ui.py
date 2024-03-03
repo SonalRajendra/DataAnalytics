@@ -1,7 +1,7 @@
 from time import sleep
 import streamlit as st
 from pathlib import Path
-from DataAnalyticsPlatform.aimodel import NeuralNetworkModel, RandomForestModel, DataProcessor, Evaluation
+from aimodel import NeuralNetworkModel, RandomForestModel, DataProcessor, Evaluation
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
