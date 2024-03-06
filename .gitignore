@@ -5,3 +5,4 @@ main.py
 .aimodel
 *.pyc
 .DS_Store
+.vscode/settings.json
