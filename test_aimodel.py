@@ -1,11 +1,10 @@
 import unittest
-
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
-
-from aimodel import DataProcessor, Evaluation, NeuralNetworkModel, RandomForestModel
+from xgboost import XGBClassifier, XGBRegressor
+from aimodel import DataProcessor, Evaluation, NeuralNetworkModel, RandomForestModel, XGBoostModel
 
 
 class TestDataProcessor(unittest.TestCase):
@@ -173,6 +172,54 @@ class TestRandomForestModel(unittest.TestCase):
         X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
         y_train = [-1, -1, -1, 1, 1, 1]
         X_test = [[-1, -1], [2, 2], [3, 2]]
+        model.train(X_train, y_train)
+        model.predict(X_test)
+        self.assertIsNotNone(model.prediction)
+
+
+class TestXGBoostModel(unittest.TestCase):
+    def test_classifier_creation_xgb(self):
+        classifier = XGBClassifier
+        model = XGBoostModel(classifier, n_estimators=100, objective="binary:logistic", learning_rate=0.3)
+        self.assertIsInstance(model.xgb, XGBClassifier)
+
+    def test_regressor_creation_xgb(self):
+        regressor = XGBRegressor
+        model = XGBoostModel(regressor, n_estimators=100, objective="reg:squarederror", learning_rate=0.3)
+        self.assertIsInstance(model.xgb, XGBRegressor)
+
+    def test_classifier_training_xgb(self):
+        classifier = XGBClassifier  # Note: Instantiate XGBClassifier
+        model = XGBoostModel(classifier, n_estimators=100, learning_rate=0.1, objective="binary:logistic")
+        X_train = [[-1, -1], [-1, 0], [0, -1], [1, 1], [1, 2], [2, 1]]
+        y_train = [0, 0, 0, 1, 1, 1]
+        model.train(X_train, y_train)
+        self.assertTrue(model.xgb._Booster)
+
+    def test_classifier_prediction_xgb(self):
+        classifier = XGBClassifier
+        model = XGBoostModel(classifier, n_estimators=100, objective="binary:logistic", learning_rate=0.3)
+        X_train = [[-2, -1], [-1, -2], [0, -1], [1, 1], [1, 2], [2, 1]]
+        y_train = [0, 0, 0, 1, 1, 1]
+        X_test = [[-1, -1], [2, 2], [3, 3]]        
+        model.train(X_train, y_train)
+        model.predict(X_test)
+        self.assertIsNotNone(model.prediction)
+
+    def test_regressor_training_xgb(self):
+        regressor = XGBRegressor
+        model = XGBoostModel(regressor, n_estimators=100, objective="reg:squarederror", learning_rate=0.3)
+        X_train = [[-2, -1], [-1, -2], [0, -1], [1, 1], [1, 2], [2, 1]]
+        y_train = [0, 0, 0, 1, 1, 1]
+        model.train(X_train, y_train)
+        self.assertTrue(model.xgb._Booster)
+
+    def test_regressor_prediction_xgb(self):
+        regressor = XGBRegressor
+        model = XGBoostModel(regressor, n_estimators=100, objective="reg:squarederror", learning_rate=0.3)
+        X_train = [[-2, -1], [-1, -2], [0, -1], [1, 1], [1, 2], [2, 1]]
+        y_train = [0, 0, 0, 1, 1, 1]
+        X_test = [[-1, -1], [2, 2], [3, 3]]        
         model.train(X_train, y_train)
         model.predict(X_test)
         self.assertIsNotNone(model.prediction)
