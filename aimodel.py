@@ -160,7 +160,7 @@ class RandomForestModel(BaseMLModel):
         Supported criteria are "friedman_mse", "squared_error", "poisson" for Regression.
         - min_samples_split (int): The minimum number of samples required to split an internal node
         - min_samples_leaf (int): The minimum number of samples required to be at a leaf node.
-        - max_depth: Maximum depth of the individual regression estimators.
+        - max_depth: Maximum depth of the individual estimators.
         """
         self.rf = classifier_or_regressor(
             n_estimators=n_estimators,
@@ -199,9 +199,26 @@ class XGBoostModel(BaseMLModel):
     A wrapper class for XGBoost model, supporting both classification and regression.
     """
 
-    # TODO: to be implemented
-    def __init__(self):
-        self.xgboost = XGBoost()  # noqa: F821
+    def __init__(self, classifier_or_regressor, n_estimators: int, learning_rate: int, objective: str):
+        """
+        Initialize the XGBoost object with the specified parameters.
+
+        Parameters:
+        - classifier_or_regressor: It will define the type of data : Classification or Regression.
+        The underlying XGBoost model to be used, either XGBClassifier or XGBRegressor.
+        - n_estimators (int): The number of trees in the forest.
+        - objective (str): Specify the learning task and the corresponding learning objective.
+        Supported objective are "binary:logistic", "binary:logitraw", "binary:hinge" for Classification.
+        Supported objective are "reg:squarederror", "reg:squaredlogerror", "reg:logistic" for Regression.
+        - max_depth: Maximum depth of the individual estimators.
+        """
+        self.xgb = classifier_or_regressor(
+            objective = objective,
+            learning_rate = learning_rate,
+            max_depth=4,
+            n_estimators=n_estimators,
+            random_state=20
+        )
 
     def train(self, X_train, y_train):
         """
@@ -211,7 +228,7 @@ class XGBoostModel(BaseMLModel):
         - X_train: The selected features of the training data.
         - y_train: The target value of the training data.
         """
-        self.xgboost.fit(X_train, y_train)
+        self.xgb.fit(X_train, y_train)
 
     def predict(self, X_test):
         """
@@ -223,7 +240,7 @@ class XGBoostModel(BaseMLModel):
         Returns:
         - prediction: The predicted target of the test data.
         """
-        self.prediction = self.xgboost.predict(X_test)
+        self.prediction = self.xgb.predict(X_test)
 
 
 # This class will evaluate the accuracy, precision and Root Mean Square Error of the model
