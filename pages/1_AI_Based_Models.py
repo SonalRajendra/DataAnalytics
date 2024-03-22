@@ -3,8 +3,8 @@ from pathlib import Path
 import streamlit as st
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
-
-from aimodel import DataProcessor, Evaluation, NeuralNetworkModel, RandomForestModel
+from xgboost import XGBClassifier, XGBRegressor
+from aimodel import DataProcessor, Evaluation, NeuralNetworkModel, RandomForestModel, XGBoostModel
 
 st.title("AI Model")
 
@@ -37,6 +37,10 @@ def split_data(data_processor):
     test_size_input = st.slider("Select test size", 0.1, 1.0, 0.25)
     data_processor.splitData(test_size=test_size_input)
     return data_processor
+    # if st.button(label='Split Data'):
+    #     data_processor.splitData(test_size=test_size_input)
+    #     return data_processor
+    # return None
 
 
 # Check the data processed or Raw
@@ -64,12 +68,21 @@ def select_model():
 # Setting the Configuration by getting user input
 def get_training_config(model_option):
     # Used to set Neural Network type
-    class_mapping_nn = {"Classification": MLPClassifier, "Regression": MLPRegressor}
+    class_mapping_nn = {
+        "Classification": MLPClassifier, 
+        "Regression": MLPRegressor
+    }
 
     # Used to set Random Forest type
     class_mapping_rf = {
         "Classification": RandomForestClassifier,
         "Regression": RandomForestRegressor,
+    }
+
+    # Used to set XGBoost type
+    class_mapping_xgb = {
+        "Classification": XGBClassifier,
+        "Regression": XGBRegressor,
     }
 
     # training configuration for Neural Network
@@ -94,7 +107,7 @@ def get_training_config(model_option):
             classifier_or_regressor=class_mapping_nn[selected_classifier_or_regressor],
             activation_fn=act_fn,
             no_of_layers=no_of_layers,
-            no_of_neurons=no_of_neurons,
+            no_of_neurons=no_of_neurons
         )
 
     # training configuration for Random Forest
@@ -111,15 +124,50 @@ def get_training_config(model_option):
 
         with col3:
             if selected_classifier_or_regressor == "Classification":
-                criterion = st.selectbox("Criterion: ", ("gini", "entropy", "log_loss"))
+                criterion = st.selectbox("Criterion: ", ("gini", "entropy", "log_loss"), 
+                                         help='The function to measure the quality of a split. Supported criteria are “gini” for the Gini impurity and “log_loss” and “entropy” both for the Shannon information gain.'
+                                         )
             else:
                 criterion = st.selectbox(
-                    "Criterion: ", ("friedman_mse", "squared_error", "poisson")
+                    "Criterion: ", ("friedman_mse", "squared_error", "poisson"),
+                    help='The function to measure the quality of a split. Supported criteria are “squared_error” for the mean squared error, which is equal to variance reduction as feature selection criterion and minimizes the L2 loss using the mean of each terminal node, “friedman_mse”, which uses mean squared error with Friedman’s improvement score for potential splits, and “poisson” which uses reduction in Poisson deviance to find splits. Training using “absolute_error” is significantly slower than when using “squared_error”.'
                 )
         return RandomForestModel(
             classifier_or_regressor=class_mapping_rf[selected_classifier_or_regressor],
             n_estimators=n_est,
-            criterion=criterion,
+            criterion=criterion
+        )
+    
+    # training configuration for XGBoost
+    elif model_option == "XGBoost":
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            selected_classifier_or_regressor = st.selectbox(
+                "Nature of Data: ", ("Classification", "Regression")
+            )
+        with col2:
+            n_est = st.number_input(
+                "Number of Estimators", min_value=100, max_value=1000, step=50
+            )
+        with col3:
+            learning_rate = st.number_input(
+                "Learning Rate", min_value=0.1, max_value=0.3, step=0.1
+            )
+        with col4:
+            if selected_classifier_or_regressor == "Classification":
+                objective = st.selectbox("Objective: ", ("binary:logistic", "binary:logitraw", "binary:hinge"),
+                                         help='Specify the learning task and the corresponding learning objective. binary:logistic: logistic regression for binary classification, output probability. binary:logitraw: logistic regression for binary classification, output score before logistic transformation binary:hinge: hinge loss for binary classification. This makes predictions of 0 or 1, rather than producing probabilities.'
+                                         )
+            else:
+                objective = st.selectbox(
+                    "Objective: ", ("reg:squarederror", "reg:squaredlogerror", "reg:logistic"),
+                    help='Specify the learning task and the corresponding learning objective. reg:squarederror: regression with squared loss. reg:squaredlogerror: regression with squared log loss. reg:logistic: logistic regression, output probability'
+                )
+        return XGBoostModel(
+            classifier_or_regressor=class_mapping_xgb[selected_classifier_or_regressor],
+            n_estimators=n_est,
+            objective=objective,
+            learning_rate=learning_rate
         )
 
 
