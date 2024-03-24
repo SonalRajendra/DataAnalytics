@@ -8,6 +8,8 @@ from sklearn.metrics import (
     confusion_matrix,
     mean_squared_error,
     precision_score,
+    mean_absolute_error,
+    r2_score
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
@@ -19,14 +21,14 @@ class DataProcessor:
     # def _get_data(self):
     #    return self.data
 
-    def __init__(self, file_path: str) -> None:
+    def __init__(self, df: pd.DataFrame) -> None:
         """
-        Initialize DataProcessor object with a file path. It is reading the data from csv file.
+        Initialize DataProcessor object with a pandas dataframe
 
         Parameters:
-        - file_path (str): Path to the CSV file containing the dataset.
+        - df (pd.Dataframe): Dataframe containing the dataset.
         """
-        self.data = pd.read_csv(file_path)
+        self.data = df
 
     def get_columns(self):
         """
@@ -37,7 +39,7 @@ class DataProcessor:
         """
         return self.data.columns.values.tolist()
 
-    def select_X_y(self, X_columns: list, y_columns: list):
+    def select_X_y(self, X_columns: list, y_columns: list, classifier_or_regressor: str):
         """
         Select X and y columns from the given dataset.
 
@@ -47,18 +49,25 @@ class DataProcessor:
         """
         self.X = self.data[X_columns]
         self.y = self.data[y_columns]
-        self.y = self.y.values.ravel()
+        if classifier_or_regressor == 'Classification':
+            self.y = self.y.values.ravel()
 
-    def splitData(self, test_size: float):
+    def splitData(self, test_size: float, classifier_or_regressor: str):
         """
         Split the dataset into training and testing datasets.
 
         Parameters:
         - test_size (float): The proportion of the dataset to include in the test split.
         """
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            self.X, self.y, test_size=test_size, stratify=self.y, random_state=37
-        )
+        if classifier_or_regressor == 'Classification':
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+                self.X, self.y, test_size=test_size, stratify=self.y, random_state=37
+            )
+        else:
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+                self.X, self.y, test_size=test_size, random_state=37
+            )
+
 
     def scaleData(self):
         """
@@ -199,7 +208,13 @@ class XGBoostModel(BaseMLModel):
     A wrapper class for XGBoost model, supporting both classification and regression.
     """
 
-    def __init__(self, classifier_or_regressor, n_estimators: int, learning_rate: int, objective: str):
+    def __init__(
+        self,
+        classifier_or_regressor,
+        n_estimators: int,
+        learning_rate: int,
+        objective: str,
+    ):
         """
         Initialize the XGBoost object with the specified parameters.
 
@@ -213,11 +228,11 @@ class XGBoostModel(BaseMLModel):
         - max_depth: Maximum depth of the individual estimators.
         """
         self.xgb = classifier_or_regressor(
-            objective = objective,
-            learning_rate = learning_rate,
+            objective=objective,
+            learning_rate=learning_rate,
             max_depth=4,
             n_estimators=n_estimators,
-            random_state=20
+            random_state=20,
         )
 
     def train(self, X_train, y_train):
@@ -286,6 +301,24 @@ class Evaluation:
         - float: RMSE value.
         """
         return np.sqrt(mean_squared_error(self.y_test, self.y_pred))
+        
+    def get_mae(self):
+        """
+        Calculation of Mean Absolute Error (MAE) of the model.
+
+        Returns:
+        - float: MAE value.
+        """
+        return mean_absolute_error(self.y_test, self.y_pred)
+
+    def get_r2(self):
+        """
+        Calculation of R-squared (R²) Score of the model.
+
+        Returns:
+        - float: R² value.
+        """
+        return r2_score(self.y_test, self.y_pred)
 
     def get_confusionmatrix(self):
         """
@@ -306,4 +339,13 @@ class Evaluation:
         sns.heatmap(conf_matrix, annot=True, cmap="Blues", fmt="g")
         plt.xlabel("Predicted")
         plt.ylabel("True")
+        st.pyplot(fig)
+
+    def scatter_plot_predicted_vs_actual(self):
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.scatter(self.y_test, self.y_pred, color='blue', alpha=0.5)
+        ax.set_title('Scatter Plot of Predicted vs. Actual Values')
+        ax.set_xlabel('Actual Values')
+        ax.set_ylabel('Predicted Values')
+        ax.grid(True)
         st.pyplot(fig)
