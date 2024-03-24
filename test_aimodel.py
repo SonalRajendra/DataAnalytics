@@ -1,44 +1,38 @@
 import unittest
+
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from xgboost import XGBClassifier, XGBRegressor
-from aimodel import DataProcessor, Evaluation, NeuralNetworkModel, RandomForestModel, XGBoostModel
+
+from aimodel import (
+    DataProcessor,
+    Evaluation,
+    NeuralNetworkModel,
+    RandomForestModel,
+    XGBoostModel,
+)
 
 
 class TestDataProcessor(unittest.TestCase):
     def setUp(self):
-        # Create a CSV file for testing
-        self.file_path = "test_data.csv"
-        data = {
+        values = {
             "testfeature1": [1, 2, 3, 4, 5],
             "testfeature2": [6, 7, 8, 9, 10],
             "target": [0, 1, 0, 1, 0],
         }
-        df = pd.DataFrame(data)
-        df.to_csv(self.file_path, index=False)
-
-    def tearDown(self):
-        # Delete the CSV file after testing
-        import os
-
-        os.remove(self.file_path)
-
-    def test_init(self):
-        # Test the initoalizationof DataProcessor object with file path
-        data_processor = DataProcessor(self.file_path)
-        self.assertIsInstance(data_processor.data, pd.DataFrame)
+        self.df = pd.DataFrame(values)
 
     def test_get_columns(self):
         # Test if get_columns method returns column names
-        data_processor = DataProcessor(self.file_path)
+        data_processor = DataProcessor(self.df)
         columns = data_processor.get_columns()
         self.assertListEqual(columns, ["testfeature1", "testfeature2", "target"])
 
     def test_select_X_y(self):
         # Test if select_X_y method selects X and y columns correctly
-        data_processor = DataProcessor(self.file_path)
+        data_processor = DataProcessor(self.df)
         data_processor.select_X_y(["testfeature1", "testfeature2"], ["target"])
         self.assertListEqual(
             data_processor.X.columns.tolist(), ["testfeature1", "testfeature2"]
@@ -47,7 +41,7 @@ class TestDataProcessor(unittest.TestCase):
 
     def test_splitData(self):
         # Test if splitData method splits data into train and test sets
-        data_processor = DataProcessor(self.file_path)
+        data_processor = DataProcessor(self.df)
         data_processor.select_X_y(["testfeature1", "testfeature2"], ["target"])
         data_processor.splitData(test_size=0.4)
         self.assertEqual(len(data_processor.X_train), 3)
@@ -57,7 +51,7 @@ class TestDataProcessor(unittest.TestCase):
 
     def test_scaleData(self):
         # Test if scaleData method scales the data
-        data_processor = DataProcessor(self.file_path)
+        data_processor = DataProcessor(self.df)
         data_processor.select_X_y(["testfeature1", "testfeature2"], ["target"])
         data_processor.splitData(test_size=0.4)
         data_processor.scaleData()
@@ -180,17 +174,23 @@ class TestRandomForestModel(unittest.TestCase):
 class TestXGBoostModel(unittest.TestCase):
     def test_classifier_creation_xgb(self):
         classifier = XGBClassifier
-        model = XGBoostModel(classifier, n_estimators=100, objective="binary:logistic", learning_rate=0.3)
+        model = XGBoostModel(
+            classifier, n_estimators=100, objective="binary:logistic", learning_rate=0.3
+        )
         self.assertIsInstance(model.xgb, XGBClassifier)
 
     def test_regressor_creation_xgb(self):
         regressor = XGBRegressor
-        model = XGBoostModel(regressor, n_estimators=100, objective="reg:squarederror", learning_rate=0.3)
+        model = XGBoostModel(
+            regressor, n_estimators=100, objective="reg:squarederror", learning_rate=0.3
+        )
         self.assertIsInstance(model.xgb, XGBRegressor)
 
     def test_classifier_training_xgb(self):
         classifier = XGBClassifier  # Note: Instantiate XGBClassifier
-        model = XGBoostModel(classifier, n_estimators=100, learning_rate=0.1, objective="binary:logistic")
+        model = XGBoostModel(
+            classifier, n_estimators=100, learning_rate=0.1, objective="binary:logistic"
+        )
         X_train = [[-1, -1], [-1, 0], [0, -1], [1, 1], [1, 2], [2, 1]]
         y_train = [0, 0, 0, 1, 1, 1]
         model.train(X_train, y_train)
@@ -198,17 +198,21 @@ class TestXGBoostModel(unittest.TestCase):
 
     def test_classifier_prediction_xgb(self):
         classifier = XGBClassifier
-        model = XGBoostModel(classifier, n_estimators=100, objective="binary:logistic", learning_rate=0.3)
+        model = XGBoostModel(
+            classifier, n_estimators=100, objective="binary:logistic", learning_rate=0.3
+        )
         X_train = [[-2, -1], [-1, -2], [0, -1], [1, 1], [1, 2], [2, 1]]
         y_train = [0, 0, 0, 1, 1, 1]
-        X_test = [[-1, -1], [2, 2], [3, 3]]        
+        X_test = [[-1, -1], [2, 2], [3, 3]]
         model.train(X_train, y_train)
         model.predict(X_test)
         self.assertIsNotNone(model.prediction)
 
     def test_regressor_training_xgb(self):
         regressor = XGBRegressor
-        model = XGBoostModel(regressor, n_estimators=100, objective="reg:squarederror", learning_rate=0.3)
+        model = XGBoostModel(
+            regressor, n_estimators=100, objective="reg:squarederror", learning_rate=0.3
+        )
         X_train = [[-2, -1], [-1, -2], [0, -1], [1, 1], [1, 2], [2, 1]]
         y_train = [0, 0, 0, 1, 1, 1]
         model.train(X_train, y_train)
@@ -216,10 +220,12 @@ class TestXGBoostModel(unittest.TestCase):
 
     def test_regressor_prediction_xgb(self):
         regressor = XGBRegressor
-        model = XGBoostModel(regressor, n_estimators=100, objective="reg:squarederror", learning_rate=0.3)
+        model = XGBoostModel(
+            regressor, n_estimators=100, objective="reg:squarederror", learning_rate=0.3
+        )
         X_train = [[-2, -1], [-1, -2], [0, -1], [1, 1], [1, 2], [2, 1]]
         y_train = [0, 0, 0, 1, 1, 1]
-        X_test = [[-1, -1], [2, 2], [3, 3]]        
+        X_test = [[-1, -1], [2, 2], [3, 3]]
         model.train(X_train, y_train)
         model.predict(X_test)
         self.assertIsNotNone(model.prediction)
