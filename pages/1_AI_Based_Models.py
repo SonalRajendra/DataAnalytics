@@ -1,7 +1,9 @@
 import os
-from matplotlib import pyplot as plt
+
 import pandas as pd
+import seaborn as sns
 import streamlit as st
+from matplotlib import pyplot as plt
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from xgboost import XGBClassifier, XGBRegressor
@@ -13,21 +15,16 @@ from aimodel import (
     RandomForestModel,
     XGBoostModel,
 )
-import seaborn as sns
 
 st.title("AI based Classification and Regression Models")
 
-'''
-Dictionary mapping string labels to corresponding AI Models : Neural Network, Random Forest and XGBoost.
 
-Key:
-    - Classification: For classification tasks
-    - Regression: For regression tasks
-'''
-class_mapping_nn = {
-    "Classification": MLPClassifier, 
-    "Regression": MLPRegressor
-}
+# Dictionary mapping string labels to corresponding AI Models : Neural Network, Random Forest and XGBoost.
+# Key:
+#    - Classification: For classification tasks
+#    - Regression: For regression tasks
+
+class_mapping_nn = {"Classification": MLPClassifier, "Regression": MLPRegressor}
 
 class_mapping_rf = {
     "Classification": RandomForestClassifier,
@@ -54,14 +51,16 @@ def choose_dataset():
         return DataProcessor(uploaded_file_df)
     return None
 
+
 def select_problem_type():
     """
     choose the problem type to perform features of the AI based Models
     """
     select_problem_type = st.selectbox(
-    "Nature of Data: ", ("Classification", "Regression")
+        "Nature of Data: ", ("Classification", "Regression")
     )
     return select_problem_type
+
 
 def select_data(data_processor, problem_type):
     """
@@ -93,7 +92,9 @@ def split_data(data_processor, problem_type):
     - data_processor (DataProcessor): An updated instance of the DataProcessor class.
     """
     test_size_input = st.slider("Select test size", 0.1, 1.0, 0.25)
-    data_processor.splitData(test_size=test_size_input, classifier_or_regressor=problem_type)
+    data_processor.splitData(
+        test_size=test_size_input, classifier_or_regressor=problem_type
+    )
     return data_processor
     # if st.button(label='Split Data'):
     #     data_processor.splitData(test_size=test_size_input)
@@ -114,6 +115,7 @@ def check_data():
     )
     return data_processed
 
+
 def scale_data(data_processor):
     """
     Scales the data if it is raw for smoothning purpose.
@@ -131,7 +133,7 @@ def select_model():
 
     Returns:
     - model_option (str): The selected AI model.
-    """    
+    """
     model_option = st.selectbox(
         "Select your AI model 🤖", ("Neural Network", "Random Forest", "XGBoost")
     )
@@ -148,7 +150,7 @@ def get_training_config(model_option, selected_classifier_or_regressor):
 
     Returns:
     - The configured AI model.
-    """    
+    """
 
     if model_option == "Neural Network":
         """
@@ -215,7 +217,7 @@ def get_training_config(model_option, selected_classifier_or_regressor):
     elif model_option == "XGBoost":
         """
         Training configuration for XGBoost
-        """        
+        """
         col1, col2, col3 = st.columns(3)
         with col1:
             n_est = st.number_input(
@@ -270,7 +272,7 @@ def train_model(model, data_processor_split):
     """
     training_success = False
     if st.button("Train Model 🚀", use_container_width=True, type="primary"):
-        with st.spinner('Training...'):
+        with st.spinner("Training..."):
             model.train(data_processor_split.X_train, data_processor_split.y_train)
             training_success = True
         st.success("Done!", icon="✅")
@@ -287,7 +289,7 @@ def get_prediction(model, data_processor_split):
 
     Returns:
     - model: The predictions of the machine learning model.
-    """    
+    """
     return model.predict(data_processor_split.X_test)
 
 
@@ -297,7 +299,7 @@ def plot_confusion_matrix(conf_matrix):
     Plot: Confusion matrix.
     """
     fig, ax = plt.subplots(figsize=(8, 6))
-    sns.heatmap(conf_matrix, annot=True, cmap="Blues", fmt="g")
+    sns.heatmap(conf_matrix, annot=True, cmap="Reds", fmt="g")
     plt.xlabel("Predicted")
     plt.ylabel("True")
     return fig
@@ -317,24 +319,56 @@ def get_evaluation(model, data_processor_split, problem_type):
     - evaluation_results: The evaluation results obtained from the model.
     """
     evaluation = Evaluation(y_test=data_processor_split.y_test, y_pred=model.prediction)
-    st.header("Evaluation")
-    st.metric(value=round(evaluation.get_rmse(), 2), label="Root Mean Squared Error")
-    col1, col2 = st.columns(2)
+    st.header("📊 Evaluation")
+    st.subheader("Metrics", divider="red")
+    col1, col2, col3 = st.columns(3)
     if problem_type == "Classification":
-        col1.metric(value=round(evaluation.get_accuracy(), 2), label="Accuracy")
-        col2.metric(value=round(evaluation.get_precision(), 3), label="Precision")
+        col1.metric(
+            value=round(evaluation.get_accuracy(), 2),
+            label="Accuracy",
+            help="The proportion of correctly classified instances. The best value is 1.0 (100%)",
+        )
+        col2.metric(
+            value=round(evaluation.get_precision(), 3),
+            label="Precision",
+            help="The proportion of true positive predictions among all positive predictions. ",
+        )
+        col3.metric(
+            value=round(evaluation.get_recall_score(), 3),
+            label="Recall Score",
+            help="The proportion of true positive predictions among all actual positives.",
+        )
         cm_test = evaluation.get_confusionmatrix()
-        st.header("Confusion Matrix for Test Data")
+        st.subheader("Confusion Matrix for Test Data", divider="red")
         fig = plot_confusion_matrix(cm_test)
         st.pyplot(fig)
     else:
-        col1.metric(value=round(evaluation.get_mae(), 2), label="Mean Absolute Error")
-        col2.metric(value=round(evaluation.get_r2(), 3), label="R-squared Score")
+        col1.metric(
+            value=round(evaluation.get_mae(), 2),
+            label="Mean Absolute Error",
+            help="The average absolute difference between predicted and actual values",
+        )
+        col2.metric(
+            value=round(evaluation.get_r2(), 3),
+            label="R-squared Score",
+            help="The proportion of the variance in the dependent variable that is predictable from the independent variables",
+        )
+        col3.metric(
+            value=round(evaluation.get_rmse(), 2),
+            label="Root Mean Squared Error",
+            help="The square root of the average of the squares of the differences between predicted and actual values",
+        )
         fig = evaluation.scatter_plot_predicted_vs_actual()
+        st.subheader("Scatter Plot of Predicted vs. Actual Values", divider="red")
         st.pyplot(fig)
         # Plot regression line
-        fig = evaluation.plot_regression_line(data_processor_split.X_test, data_processor_split.y_test, model)
-        st.pyplot(fig)
+        try:
+            fig = evaluation.plot_regression_line(
+                data_processor_split.X_test, data_processor_split.y_test, model
+            )
+            st.pyplot(fig)
+        except ValueError:
+            pass
 
 
 def main():

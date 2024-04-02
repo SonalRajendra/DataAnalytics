@@ -4,10 +4,11 @@ import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
+    mean_absolute_error,
     mean_squared_error,
     precision_score,
-    mean_absolute_error,
-    r2_score
+    r2_score,
+    recall_score,
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
@@ -37,7 +38,9 @@ class DataProcessor:
         """
         return self.data.columns.values.tolist()
 
-    def select_X_y(self, X_columns: list, y_columns: list, classifier_or_regressor: str):
+    def select_X_y(
+        self, X_columns: list, y_columns: list, classifier_or_regressor: str
+    ):
         """
         Select X and y columns from the given dataset.
 
@@ -47,7 +50,7 @@ class DataProcessor:
         """
         self.X = self.data[X_columns]
         self.y = self.data[y_columns]
-        if classifier_or_regressor == 'Classification':
+        if classifier_or_regressor == "Classification":
             self.y = self.y.values.ravel()
 
     def splitData(self, test_size: float, classifier_or_regressor: str):
@@ -57,7 +60,7 @@ class DataProcessor:
         Parameters:
         - test_size (float): The proportion of the dataset to include in the test split.
         """
-        if classifier_or_regressor == 'Classification':
+        if classifier_or_regressor == "Classification":
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
                 self.X, self.y, test_size=test_size, stratify=self.y, random_state=37
             )
@@ -65,7 +68,6 @@ class DataProcessor:
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
                 self.X, self.y, test_size=test_size, random_state=37
             )
-
 
     def scaleData(self):
         """
@@ -298,8 +300,13 @@ class Evaluation:
         Returns:
         - float: RMSE value.
         """
-        return np.sqrt(mean_squared_error(self.y_test, self.y_pred))
-        
+        return np.sqrt(
+            mean_squared_error(self.y_test, self.y_pred, multioutput="uniform_average")
+        )
+
+    def get_recall_score(self):
+        return recall_score(y_true=self.y_test, y_pred=self.y_pred)
+
     def get_mae(self):
         """
         Calculation of Mean Absolute Error (MAE) of the model.
@@ -307,7 +314,9 @@ class Evaluation:
         Returns:
         - float: MAE value.
         """
-        return mean_absolute_error(self.y_test, self.y_pred)
+        return mean_absolute_error(
+            self.y_test, self.y_pred, multioutput="uniform_average"
+        )
 
     def get_r2(self):
         """
@@ -326,22 +335,22 @@ class Evaluation:
         - array: Confusion matrix.
         """
         return confusion_matrix(self.y_test, self.y_pred)
-            
+
     def scatter_plot_predicted_vs_actual(self):
         fig, ax = plt.subplots(figsize=(8, 6))
-        ax.scatter(self.y_test, self.y_pred, color='blue', alpha=0.5)
-        ax.set_title('Scatter Plot of Predicted vs. Actual Values')
-        ax.set_xlabel('Actual Values')
-        ax.set_ylabel('Predicted Values')
+        ax.scatter(self.y_test, self.y_pred, color="red", alpha=0.5)
+        ax.set_title("Scatter Plot of Predicted vs. Actual Values")
+        ax.set_xlabel("Actual Values")
+        ax.set_ylabel("Predicted Values")
         ax.grid(True)
         return fig
 
-    def plot_regression_line(X, y, model):
+    def plot_regression_line(self, X, y, model):
         plt.figure(figsize=(8, 6))
-        plt.scatter(X, y, color='blue', label='Actual Data')
-        plt.plot(X, model.predict(X), color='red', label='Regression Line')
-        plt.title('Regression Line Plot')
-        plt.xlabel('X')
-        plt.ylabel('y')
+        plt.scatter(X, y, color="blue", label="Actual Data")
+        plt.plot(X, model.predict(X), color="red", label="Regression Line")
+        plt.title("Regression Line Plot")
+        plt.xlabel("X")
+        plt.ylabel("y")
         plt.legend()
         plt.grid(True)
