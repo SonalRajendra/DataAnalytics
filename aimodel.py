@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import streamlit as st
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
@@ -328,19 +326,7 @@ class Evaluation:
         - array: Confusion matrix.
         """
         return confusion_matrix(self.y_test, self.y_pred)
-
-    def plot_confusion_matrix(self, conf_matrix):
-        """
-        Plot the confusion matrix of the model.
-
-        Plot: Confusion matrix.
-        """
-        fig, ax = plt.subplots(figsize=(8, 6))
-        sns.heatmap(conf_matrix, annot=True, cmap="Blues", fmt="g")
-        plt.xlabel("Predicted")
-        plt.ylabel("True")
-        st.pyplot(fig)
-
+            
     def scatter_plot_predicted_vs_actual(self):
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.scatter(self.y_test, self.y_pred, color='blue', alpha=0.5)
@@ -348,4 +334,14 @@ class Evaluation:
         ax.set_xlabel('Actual Values')
         ax.set_ylabel('Predicted Values')
         ax.grid(True)
-        st.pyplot(fig)
+        return fig
+
+    def plot_regression_line(X, y, model):
+        plt.figure(figsize=(8, 6))
+        plt.scatter(X, y, color='blue', label='Actual Data')
+        plt.plot(X, model.predict(X), color='red', label='Regression Line')
+        plt.title('Regression Line Plot')
+        plt.xlabel('X')
+        plt.ylabel('y')
+        plt.legend()
+        plt.grid(True)
