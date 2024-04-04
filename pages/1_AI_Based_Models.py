@@ -1,5 +1,4 @@
 import os
-
 import pandas as pd
 import seaborn as sns
 import streamlit as st
@@ -19,12 +18,15 @@ from aimodel import (
 st.title("AI based Classification and Regression Models")
 
 
-# Dictionary mapping string labels to corresponding AI Models : Neural Network, Random Forest and XGBoost.
-# Key:
+#Dictionary mapping string labels to corresponding AI Models : Neural Network, Random Forest and XGBoost.
+#Key:
 #    - Classification: For classification tasks
 #    - Regression: For regression tasks
 
-class_mapping_nn = {"Classification": MLPClassifier, "Regression": MLPRegressor}
+class_mapping_nn = {
+    "Classification": MLPClassifier, 
+    "Regression": MLPRegressor
+}
 
 class_mapping_rf = {
     "Classification": RandomForestClassifier,
@@ -51,7 +53,6 @@ def choose_dataset():
         return DataProcessor(uploaded_file_df)
     return None
 
-
 def select_problem_type():
     """
     choose the problem type to perform features of the AI based Models
@@ -74,8 +75,8 @@ def select_data(data_processor, problem_type):
     - data_processor (DataProcessor): An updated instance of the DataProcessor class.
     """
     columns = data_processor.get_columns()
-    X_columns = st.multiselect("Choose your X_Columns", columns)
-    y_columns = st.multiselect("Choose your y_Columns", columns)
+    X_columns = st.multiselect("Choose your Input Columns", columns)
+    y_columns = st.multiselect("Choose your Output Columns", columns)
     data_processor.select_X_y(X_columns, y_columns, problem_type)
     return data_processor
 
@@ -92,14 +93,15 @@ def split_data(data_processor, problem_type):
     - data_processor (DataProcessor): An updated instance of the DataProcessor class.
     """
     test_size_input = st.slider("Select test size", 0.1, 1.0, 0.25)
-    data_processor.splitData(
-        test_size=test_size_input, classifier_or_regressor=problem_type
-    )
-    return data_processor
-    # if st.button(label='Split Data'):
-    #     data_processor.splitData(test_size=test_size_input)
-    #     return data_processor
-    # return None
+    try:
+        data_processor.splitData(
+            test_size=test_size_input, classifier_or_regressor=problem_type
+        )
+        return data_processor
+    except ValueError:
+        st.error('Input and output not selected')
+        return
+    
 
 
 def check_data():
@@ -140,7 +142,6 @@ def select_model():
     return model_option
 
 
-# Setting the Configuration by getting user input
 def get_training_config(model_option, selected_classifier_or_regressor):
     """
     It allows the user to set the configuration of an AI model from a predefined parameters and values.
@@ -158,7 +159,14 @@ def get_training_config(model_option, selected_classifier_or_regressor):
         """
         col1, col2, col3 = st.columns(3)
         with col1:
-            act_fn = st.selectbox("Activation Function: ", ("relu", "tanh", "logistic"))
+            act_fn = st.selectbox("Activation Function: ", ("relu", "identity", "tanh", "logistic"),
+                                  help="""
+                                  Activation function for the hidden layer:
+                                  - identity: no-op activation, useful to implement linear bottleneck, returns f(x) = x
+                                  - logistic: the logistic sigmoid function, returns f(x) = 1 / (1 + exp(-x)).
+                                  - tanh: the hyperbolic tan function, returns f(x) = tanh(x).
+                                  - relu: the rectified linear unit function, returns f(x) = max(0, x)
+                                  """)
         with col2:
             no_of_layers = st.number_input(
                 "Number of hidden layers", min_value=10, max_value=100, step=5
@@ -305,7 +313,6 @@ def plot_confusion_matrix(conf_matrix):
     return fig
 
 
-# Evaluate the model
 def get_evaluation(model, data_processor_split, problem_type):
     """
     Evaluates the trained model using the provided evaluation data.
@@ -361,14 +368,6 @@ def get_evaluation(model, data_processor_split, problem_type):
         fig = evaluation.scatter_plot_predicted_vs_actual()
         st.subheader("Scatter Plot of Predicted vs. Actual Values", divider="red")
         st.pyplot(fig)
-        # Plot regression line
-        try:
-            fig = evaluation.plot_regression_line(
-                data_processor_split.X_test, data_processor_split.y_test, model
-            )
-            st.pyplot(fig)
-        except ValueError:
-            pass
 
 
 def main():
@@ -380,18 +379,16 @@ def main():
         problem_type = select_problem_type()
         data_processor = select_data(data_processor, problem_type)
         data_processor_split = split_data(data_processor, problem_type)
-        data_process_status = check_data()
-        if data_process_status == "Raw":
-            data_processor_split = scale_data(data_processor_split)
-        model_selected = select_model()
-        model = get_training_config(model_selected, problem_type)
-        # model_trained = train_model(model_with_config, data_processor_split)
-        # model, status = model.train(data_processor_split.X_train, data_processor_split.y_train)
-        model, status = train_model(model, data_processor_split)
-        # model.predict(data_processor_split.X_test)
-        if status:
-            get_prediction(model, data_processor_split)
-            get_evaluation(model, data_processor_split, problem_type)
+        if data_processor_split:
+            data_process_status = check_data()
+            if data_process_status == "Raw":
+                data_processor_split = scale_data(data_processor_split)
+            model_selected = select_model()
+            model = get_training_config(model_selected, problem_type)
+            model, status = train_model(model, data_processor_split)
+            if status:
+                get_prediction(model, data_processor_split)
+                get_evaluation(model, data_processor_split, problem_type)
 
 
 if __name__ == "__main__":
