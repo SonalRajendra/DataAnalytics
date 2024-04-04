@@ -7,3 +7,5 @@ main.py
 .DS_Store
 .vscode/settings.json
 venv
+Dataset/*
+.vscode

@@ -1,26 +1,23 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-import streamlit as st
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
+    mean_absolute_error,
     mean_squared_error,
     precision_score,
-    mean_absolute_error,
-    r2_score
+    r2_score,
+    recall_score,
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
 
-# This class will perform the processings required for trainning the AI model
 class DataProcessor:
-    # TODO: implement later (maybe)
-    # def _get_data(self):
-    #    return self.data
-
+    """
+    This class performs the processings required for trainning the AI model
+    """
     def __init__(self, df: pd.DataFrame) -> None:
         """
         Initialize DataProcessor object with a pandas dataframe
@@ -38,8 +35,10 @@ class DataProcessor:
         - list: List of column names.
         """
         return self.data.columns.values.tolist()
-
-    def select_X_y(self, X_columns: list, y_columns: list, classifier_or_regressor: str):
+    
+    def select_X_y(
+        self, X_columns: list, y_columns: list, classifier_or_regressor: str
+    ):
         """
         Select X and y columns from the given dataset.
 
@@ -49,8 +48,8 @@ class DataProcessor:
         """
         self.X = self.data[X_columns]
         self.y = self.data[y_columns]
-        if classifier_or_regressor == 'Classification':
-            self.y = self.y.values.ravel()
+        #if classifier_or_regressor == "Classification":
+        #    self.y = self.y.values.ravel()
 
     def splitData(self, test_size: float, classifier_or_regressor: str):
         """
@@ -59,15 +58,15 @@ class DataProcessor:
         Parameters:
         - test_size (float): The proportion of the dataset to include in the test split.
         """
-        if classifier_or_regressor == 'Classification':
+        if classifier_or_regressor == "Classification":
+            self.y = self.y.values.ravel()
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-                self.X, self.y, test_size=test_size, stratify=self.y, random_state=37
+                self.X, self.y, test_size=test_size, stratify=self.y, random_state=42
             )
         else:
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
                 self.X, self.y, test_size=test_size, random_state=37
             )
-
 
     def scaleData(self):
         """
@@ -78,18 +77,7 @@ class DataProcessor:
         self.X_test = scaler.transform(self.X_test)
 
 
-class BaseMLModel:
-    def fit(self, X, y):
-        raise NotImplementedError("Implementation")
-
-    def predict(self, X):
-        raise NotImplementedError("Implementation")
-
-    def train(self, X_train, y_train):
-        self.model.fit(X_train, y_train)
-
-
-class NeuralNetworkModel(BaseMLModel):
+class NeuralNetworkModel():
     """
     A wrapper class for Neural Network model, supporting both classification and regression.
     """
@@ -120,10 +108,10 @@ class NeuralNetworkModel(BaseMLModel):
         self.nn = classifier_or_regressor(
             activation=activation_fn,
             hidden_layer_sizes=(no_of_layers, no_of_neurons),
-            alpha=0.0001,
+            alpha=0.001,
             solver="lbfgs",
             max_iter=100000,
-            random_state=20,
+            random_state=42,
             early_stopping=True,
         )
 
@@ -151,7 +139,7 @@ class NeuralNetworkModel(BaseMLModel):
         self.prediction = self.nn.predict(X_test)
 
 
-class RandomForestModel(BaseMLModel):
+class RandomForestModel():
     """
     A wrapper class for Random Forest model, supporting both classification and regression.
     """
@@ -203,7 +191,7 @@ class RandomForestModel(BaseMLModel):
         self.prediction = self.rf.predict(X_test)
 
 
-class XGBoostModel(BaseMLModel):
+class XGBoostModel():
     """
     A wrapper class for XGBoost model, supporting both classification and regression.
     """
@@ -300,8 +288,13 @@ class Evaluation:
         Returns:
         - float: RMSE value.
         """
-        return np.sqrt(mean_squared_error(self.y_test, self.y_pred))
-        
+        return np.sqrt(
+            mean_squared_error(self.y_test, self.y_pred, multioutput="uniform_average")
+        )
+
+    def get_recall_score(self):
+        return recall_score(y_true=self.y_test, y_pred=self.y_pred)
+
     def get_mae(self):
         """
         Calculation of Mean Absolute Error (MAE) of the model.
@@ -309,7 +302,9 @@ class Evaluation:
         Returns:
         - float: MAE value.
         """
-        return mean_absolute_error(self.y_test, self.y_pred)
+        return mean_absolute_error(
+            self.y_test, self.y_pred, multioutput="uniform_average"
+        )
 
     def get_r2(self):
         """
@@ -329,23 +324,21 @@ class Evaluation:
         """
         return confusion_matrix(self.y_test, self.y_pred)
 
-    def plot_confusion_matrix(self, conf_matrix):
-        """
-        Plot the confusion matrix of the model.
-
-        Plot: Confusion matrix.
-        """
-        fig, ax = plt.subplots(figsize=(8, 6))
-        sns.heatmap(conf_matrix, annot=True, cmap="Blues", fmt="g")
-        plt.xlabel("Predicted")
-        plt.ylabel("True")
-        st.pyplot(fig)
-
     def scatter_plot_predicted_vs_actual(self):
+        """
+        Scattered plot of Predicted and Actual values 
+        """
         fig, ax = plt.subplots(figsize=(8, 6))
-        ax.scatter(self.y_test, self.y_pred, color='blue', alpha=0.5)
-        ax.set_title('Scatter Plot of Predicted vs. Actual Values')
-        ax.set_xlabel('Actual Values')
-        ax.set_ylabel('Predicted Values')
+        # Scatter plot of actual values
+        ax.scatter(self.y_test, self.y_test, color='black', label='Actual Values')
+        # Scatter plot of predicted values
+        ax.scatter(self.y_test, self.y_pred, color='red', alpha=0.5, label='Predicted Values')
+        #ax.scatter(self.y_test, self.y_pred, color="red", alpha=0.5)
+        ax.set_title("Scatter Plot of Predicted vs. Actual Values")
+        ax.set_xlabel("Actual Values")
+        ax.set_ylabel("Predicted Values")
         ax.grid(True)
-        st.pyplot(fig)
+        # Plotting the regression line
+        #ax.plot(self.y_test, self.y_test, color='green', linewidth=2)  # Assuming a simple linear regression line
+        return fig
+
