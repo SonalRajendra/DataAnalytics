@@ -1,6 +1,8 @@
 import os
 import pandas as pd
+import seaborn as sns
 import streamlit as st
+from matplotlib import pyplot as plt
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from xgboost import XGBClassifier, XGBRegressor
@@ -15,19 +17,22 @@ from aimodel import (
 
 st.title("AI based Classification and Regression Models")
 
-# Used to set Neural Network type
+
+#Dictionary mapping string labels to corresponding AI Models : Neural Network, Random Forest and XGBoost.
+#Key:
+#    - Classification: For classification tasks
+#    - Regression: For regression tasks
+
 class_mapping_nn = {
     "Classification": MLPClassifier, 
     "Regression": MLPRegressor
 }
 
-# Used to set Random Forest type
 class_mapping_rf = {
     "Classification": RandomForestClassifier,
     "Regression": RandomForestRegressor,
 }
 
-# Used to set XGBoost type
 class_mapping_xgb = {
     "Classification": XGBClassifier,
     "Regression": XGBRegressor,
@@ -36,7 +41,7 @@ class_mapping_xgb = {
 
 def choose_dataset():
     """
-    choose dataset for the AI Model
+    choose a dataset to perform features of the AI based Models
     """
     uploaded_file = st.file_uploader("Choose Dataset", type=(["csv", "xlsx", "xls"]))
     if uploaded_file is not None:
@@ -49,36 +54,63 @@ def choose_dataset():
     return None
 
 def select_problem_type():
+    """
+    choose the problem type to perform features of the AI based Models
+    """
     select_problem_type = st.selectbox(
-    "Nature of Data: ", ("Classification", "Regression")
+        "Nature of Data: ", ("Classification", "Regression")
     )
     return select_problem_type
 
-# Getting the user input for X and Y columns
+
 def select_data(data_processor, problem_type):
-    # data_processor = DataProcessor(file_path)
-    # select X_columns and y_columns
+    """
+    Selects the input features (X) and target variable (y) columns based on user input.
+
+    Parameters:
+    - data_processor (DataProcessor): An instance of the DataProcessor class that provides methods to process the data.
+    - problem_type (str): Specifies the type of problem, e.g., "Classification" or "Regression".
+
+    Returns:
+    - data_processor (DataProcessor): An updated instance of the DataProcessor class.
+    """
     columns = data_processor.get_columns()
-    X_columns = st.multiselect("Choose your X_Columns", columns)
-    y_columns = st.multiselect("Choose your y_Columns", columns)
+    X_columns = st.multiselect("Choose your Input Columns", columns)
+    y_columns = st.multiselect("Choose your Output Columns", columns)
     data_processor.select_X_y(X_columns, y_columns, problem_type)
     return data_processor
 
 
-# Split the dataset for training and testing
 def split_data(data_processor, problem_type):
-    # select test size
+    """
+    Split the dataset into training and testing part based on user input.
+
+    Parameters:
+    - data_processor (DataProcessor): An instance of the DataProcessor class that provides methods to process the data.
+    - problem_type (str): Specifies the type of problem, e.g., "Classification" or "Regression".
+
+    Returns:
+    - data_processor (DataProcessor): An updated instance of the DataProcessor class.
+    """
     test_size_input = st.slider("Select test size", 0.1, 1.0, 0.25)
-    data_processor.splitData(test_size=test_size_input, classifier_or_regressor=problem_type)
-    return data_processor
-    # if st.button(label='Split Data'):
-    #     data_processor.splitData(test_size=test_size_input)
-    #     return data_processor
-    # return None
+    try:
+        data_processor.splitData(
+            test_size=test_size_input, classifier_or_regressor=problem_type
+        )
+        return data_processor
+    except ValueError:
+        st.error('Input and output not selected')
+        return
+    
 
 
-# Check the data processed or Raw
 def check_data():
+    """
+    Checks whether the data is already processed or raw.
+
+    Returns:
+    - data_processed (str): Indicates whether the data is raw or processed.
+    """
     data_processed = st.radio(
         "Is the data already processed or it is a Raw data",
         ["***Raw***", "***Processed***"],
@@ -86,26 +118,55 @@ def check_data():
     return data_processed
 
 
-# Scale data for smoothning
 def scale_data(data_processor):
+    """
+    Scales the data if it is raw for smoothning purpose.
+
+    Returns:
+    - data_processor (DataProcessor): An updated instance of the DataProcessor class.
+    """
     return data_processor.scaleData()
 
 
-# select model to perform the training
 def select_model():
+    """
+    It allows the user to select an AI model from a predefined list.
+    - Users can choose from options including "Neural Network", "Random Forest", and "XGBoost".
+
+    Returns:
+    - model_option (str): The selected AI model.
+    """
     model_option = st.selectbox(
         "Select your AI model 🤖", ("Neural Network", "Random Forest", "XGBoost")
     )
     return model_option
 
 
-# Setting the Configuration by getting user input
 def get_training_config(model_option, selected_classifier_or_regressor):
-    # training configuration for Neural Network
+    """
+    It allows the user to set the configuration of an AI model from a predefined parameters and values.
+    - Users can choose from options including Activation Function, Number of Hidden layers, Number of Neurons for Neural Network.
+    - Users can choose from options including Criterion, Number of Estimators for Random Forest.
+    - Users can choose from options including Objective, Number of Estimators, Learning rate for XGBoosting.
+
+    Returns:
+    - The configured AI model.
+    """
+
     if model_option == "Neural Network":
+        """
+        Training configuration for Neural Network
+        """
         col1, col2, col3 = st.columns(3)
         with col1:
-            act_fn = st.selectbox("Activation Function: ", ("relu", "tanh", "logistic"))
+            act_fn = st.selectbox("Activation Function: ", ("relu", "identity", "tanh", "logistic"),
+                                  help="""
+                                  Activation function for the hidden layer:
+                                  - identity: no-op activation, useful to implement linear bottleneck, returns f(x) = x
+                                  - logistic: the logistic sigmoid function, returns f(x) = 1 / (1 + exp(-x)).
+                                  - tanh: the hyperbolic tan function, returns f(x) = tanh(x).
+                                  - relu: the rectified linear unit function, returns f(x) = max(0, x)
+                                  """)
         with col2:
             no_of_layers = st.number_input(
                 "Number of hidden layers", min_value=10, max_value=100, step=5
@@ -122,8 +183,10 @@ def get_training_config(model_option, selected_classifier_or_regressor):
             no_of_neurons=no_of_neurons,
         )
 
-    # training configuration for Random Forest
     elif model_option == "Random Forest":
+        """
+        Training configuration for Random Forest
+        """
         col1, col2 = st.columns(2)
         with col1:
             n_est = st.number_input(
@@ -159,8 +222,10 @@ def get_training_config(model_option, selected_classifier_or_regressor):
             criterion=criterion,
         )
 
-    # training configuration for XGBoost
     elif model_option == "XGBoost":
+        """
+        Training configuration for XGBoost
+        """
         col1, col2, col3 = st.columns(3)
         with col1:
             n_est = st.number_input(
@@ -201,39 +266,108 @@ def get_training_config(model_option, selected_classifier_or_regressor):
         )
 
 
-# train model
 def train_model(model, data_processor_split):
+    """
+    Trains the specified model using the provided training data.
+
+    Parameters:
+    - model: The machine learning model to be trained.
+    - data_processor_split (DataProcessorSplit): An instance of the DataProcessorSplit class containing split training data.
+
+    Returns:
+    - model: The trained machine learning model.
+    - training_success (bool): Indicates whether the training was successful.
+    """
     training_success = False
     if st.button("Train Model 🚀", use_container_width=True, type="primary"):
-        with st.spinner('Training...'):
+        with st.spinner("Training..."):
             model.train(data_processor_split.X_train, data_processor_split.y_train)
             training_success = True
         st.success("Done!", icon="✅")
     return model, training_success
 
 
-# Get prediction
 def get_prediction(model, data_processor_split):
+    """
+    Predict the result using the provided testing data.
+
+    Parameters:
+    - model: The machine learning model to be predicted.
+    - data_processor_split (DataProcessorSplit): An instance of the DataProcessorSplit class containing split training data.
+
+    Returns:
+    - model: The predictions of the machine learning model.
+    """
     return model.predict(data_processor_split.X_test)
 
 
-# Evaluate the model
+def plot_confusion_matrix(conf_matrix):
+    """
+    Plot the confusion matrix of the model.
+    Plot: Confusion matrix.
+    """
+    fig, ax = plt.subplots(figsize=(8, 6))
+    sns.heatmap(conf_matrix, annot=True, cmap="Reds", fmt="g")
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    return fig
+
+
 def get_evaluation(model, data_processor_split, problem_type):
-    # evaluation = Evaluation(data_processor.y_test, model.prediction)
+    """
+    Evaluates the trained model using the provided evaluation data.
+
+    Parameters:
+    - model: The trained machine learning model to be evaluated.
+    - data_processor_split (DataProcessorSplit): An instance of the DataProcessorSplit class containing split evaluation data.
+    - problem_type (str): Specifies the type of problem, e.g., "Classification" or "Regression".
+
+    Returns:
+    - evaluation_results: The evaluation results obtained from the model.
+    """
     evaluation = Evaluation(y_test=data_processor_split.y_test, y_pred=model.prediction)
-    st.header("Evaluation")
-    st.metric(value=round(evaluation.get_rmse(), 2), label="Root Mean Squared ERROR")
-    col1, col2 = st.columns(2)
+    st.header("📊 Evaluation")
+    st.subheader("Metrics", divider="red")
+    col1, col2, col3 = st.columns(3)
     if problem_type == "Classification":
-        col1.metric(value=round(evaluation.get_accuracy(), 2), label="Accuracy")
-        col2.metric(value=round(evaluation.get_precision(), 3), label="Precision")
-        cm = evaluation.get_confusionmatrix()
-        st.header("Confusion Matrix")
-        evaluation.plot_confusion_matrix(cm)
+        col1.metric(
+            value=round(evaluation.get_accuracy(), 2),
+            label="Accuracy",
+            help="The proportion of correctly classified instances. The best value is 1.0 (100%)",
+        )
+        col2.metric(
+            value=round(evaluation.get_precision(), 3),
+            label="Precision",
+            help="The proportion of true positive predictions among all positive predictions. ",
+        )
+        col3.metric(
+            value=round(evaluation.get_recall_score(), 3),
+            label="Recall Score",
+            help="The proportion of true positive predictions among all actual positives.",
+        )
+        cm_test = evaluation.get_confusionmatrix()
+        st.subheader("Confusion Matrix for Test Data", divider="red")
+        fig = plot_confusion_matrix(cm_test)
+        st.pyplot(fig)
     else:
-        col1.metric(value=round(evaluation.get_mae(), 2), label="Mean Absolute Error")
-        col2.metric(value=round(evaluation.get_r2(), 3), label="R-squared Score")
-        evaluation.scatter_plot_predicted_vs_actual()
+        col1.metric(
+            value=round(evaluation.get_mae(), 2),
+            label="Mean Absolute Error",
+            help="The average absolute difference between predicted and actual values",
+        )
+        col2.metric(
+            value=round(evaluation.get_r2(), 3),
+            label="R-squared Score",
+            help="The proportion of the variance in the dependent variable that is predictable from the independent variables",
+        )
+        col3.metric(
+            value=round(evaluation.get_rmse(), 2),
+            label="Root Mean Squared Error",
+            help="The square root of the average of the squares of the differences between predicted and actual values",
+        )
+        fig = evaluation.scatter_plot_predicted_vs_actual()
+        st.subheader("Scatter Plot of Predicted vs. Actual Values", divider="red")
+        st.pyplot(fig)
 
 
 def main():
@@ -245,18 +379,16 @@ def main():
         problem_type = select_problem_type()
         data_processor = select_data(data_processor, problem_type)
         data_processor_split = split_data(data_processor, problem_type)
-        data_process_status = check_data()
-        if data_process_status == "Raw":
-            data_processor_split = scale_data(data_processor_split)
-        model_selected = select_model()
-        model = get_training_config(model_selected, problem_type)
-        # model_trained = train_model(model_with_config, data_processor_split)
-        # model, status = model.train(data_processor_split.X_train, data_processor_split.y_train)
-        model, status = train_model(model, data_processor_split)
-        # model.predict(data_processor_split.X_test)
-        if status:
-            get_prediction(model, data_processor_split)
-            get_evaluation(model, data_processor_split, problem_type)
+        if data_processor_split:
+            data_process_status = check_data()
+            if data_process_status == "Raw":
+                data_processor_split = scale_data(data_processor_split)
+            model_selected = select_model()
+            model = get_training_config(model_selected, problem_type)
+            model, status = train_model(model, data_processor_split)
+            if status:
+                get_prediction(model, data_processor_split)
+                get_evaluation(model, data_processor_split, problem_type)
 
 
 if __name__ == "__main__":

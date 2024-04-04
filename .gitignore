@@ -6,3 +6,5 @@ main.py
 *.pyc
 .DS_Store
 .vscode/settings.json
+Dataset/*
+.vscode
