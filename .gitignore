@@ -6,3 +6,4 @@ main.py
 *.pyc
 .DS_Store
 .vscode/settings.json
+venv
