@@ -338,7 +338,5 @@ class Evaluation:
         ax.set_xlabel("Actual Values")
         ax.set_ylabel("Predicted Values")
         ax.grid(True)
-        # Plotting the regression line
-        #ax.plot(self.y_test, self.y_test, color='green', linewidth=2)  # Assuming a simple linear regression line
         return fig
 
