@@ -37,7 +37,7 @@ class DataProcessor:
         return self.data.columns.values.tolist()
     
     def select_X_y(
-        self, X_columns: list, y_columns: list, classifier_or_regressor: str
+        self, X_columns: list, y_columns: list
     ):
         """
         Select X and y columns from the given dataset.
@@ -48,8 +48,6 @@ class DataProcessor:
         """
         self.X = self.data[X_columns]
         self.y = self.data[y_columns]
-        #if classifier_or_regressor == "Classification":
-        #    self.y = self.y.values.ravel()
 
     def splitData(self, test_size: float, classifier_or_regressor: str):
         """
@@ -246,7 +244,6 @@ class XGBoostModel():
         self.prediction = self.xgb.predict(X_test)
 
 
-# This class will evaluate the accuracy, precision and Root Mean Square Error of the model
 class Evaluation:
     """
     This class evaluates the performance of the above developed machine learning models.
@@ -293,6 +290,12 @@ class Evaluation:
         )
 
     def get_recall_score(self):
+        """
+        Calculation of Recall Score of the model.
+
+        Returns:
+        - float: MAE value.
+        """
         return recall_score(y_true=self.y_test, y_pred=self.y_pred)
 
     def get_mae(self):
@@ -338,7 +341,5 @@ class Evaluation:
         ax.set_xlabel("Actual Values")
         ax.set_ylabel("Predicted Values")
         ax.grid(True)
-        # Plotting the regression line
-        #ax.plot(self.y_test, self.y_test, color='green', linewidth=2)  # Assuming a simple linear regression line
         return fig
 
