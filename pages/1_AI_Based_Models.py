@@ -18,15 +18,12 @@ from aimodel import (
 st.title("AI based Classification and Regression Models")
 
 
-#Dictionary mapping string labels to corresponding AI Models : Neural Network, Random Forest and XGBoost.
-#Key:
+# Dictionary mapping string labels to corresponding AI Models : Neural Network, Random Forest and XGBoost.
+# Key:
 #    - Classification: For classification tasks
 #    - Regression: For regression tasks
 
-class_mapping_nn = {
-    "Classification": MLPClassifier, 
-    "Regression": MLPRegressor
-}
+class_mapping_nn = {"Classification": MLPClassifier, "Regression": MLPRegressor}
 
 class_mapping_rf = {
     "Classification": RandomForestClassifier,
@@ -53,6 +50,7 @@ def choose_dataset():
         return DataProcessor(uploaded_file_df)
     return None
 
+
 def select_problem_type():
     """
     choose the problem type to perform features of the AI based Models
@@ -60,6 +58,16 @@ def select_problem_type():
     select_problem_type = st.selectbox(
         "Nature of Data: ", ("Classification", "Regression")
     )
+    if select_problem_type == "Classification":
+        st.info(
+            "Classification categorizes data into predefined classes based on their features, enabling prediction of unseen data's class.",
+            icon="ℹ️",
+        )
+    elif select_problem_type == "Regression":
+        st.info(
+            "Regression in ML predicts numerical outcomes by establishing relationships between variables through mathematical equations.",
+            icon="ℹ️",
+        )
     return select_problem_type
 
 
@@ -77,7 +85,9 @@ def select_data(data_processor, problem_type):
     columns = data_processor.get_columns()
     X_columns = st.multiselect("Choose your Input Columns", columns)
     y_columns = st.multiselect("Choose your Output Columns", columns)
-    data_processor.select_X_y(X_columns, y_columns, problem_type)
+    # data_processor.select_X_y(X_columns, y_columns, problem_type)
+    data_processor.select_X_y(X_columns, y_columns)
+
     return data_processor
 
 
@@ -92,16 +102,15 @@ def split_data(data_processor, problem_type):
     Returns:
     - data_processor (DataProcessor): An updated instance of the DataProcessor class.
     """
-    test_size_input = st.slider("Select test size", 0.1, 1.0, 0.25)
+    test_size_input = st.slider("Select test size for training the model", 0.1, 1.0, 0.25)
     try:
         data_processor.splitData(
             test_size=test_size_input, classifier_or_regressor=problem_type
         )
         return data_processor
     except ValueError:
-        st.error('Input and output not selected')
+        st.error("Input and output not selected")
         return
-    
 
 
 def check_data():
@@ -159,14 +168,17 @@ def get_training_config(model_option, selected_classifier_or_regressor):
         """
         col1, col2, col3 = st.columns(3)
         with col1:
-            act_fn = st.selectbox("Activation Function: ", ("relu", "identity", "tanh", "logistic"),
-                                  help="""
+            act_fn = st.selectbox(
+                "Activation Function: ",
+                ("relu", "identity", "tanh", "logistic"),
+                help="""
                                   Activation function for the hidden layer:
                                   - identity: no-op activation, useful to implement linear bottleneck, returns f(x) = x
                                   - logistic: the logistic sigmoid function, returns f(x) = 1 / (1 + exp(-x)).
                                   - tanh: the hyperbolic tan function, returns f(x) = tanh(x).
                                   - relu: the rectified linear unit function, returns f(x) = max(0, x)
-                                  """)
+                                  """,
+            )
         with col2:
             no_of_layers = st.number_input(
                 "Number of hidden layers", min_value=10, max_value=100, step=5
@@ -369,6 +381,16 @@ def get_evaluation(model, data_processor_split, problem_type):
         st.subheader("Scatter Plot of Predicted vs. Actual Values", divider="red")
         st.pyplot(fig)
 
+def get_input_data_heatmap(df: pd.DataFrame):
+    st.subheader('Correlation between variables')
+    try:
+        fig=sns.heatmap(df.corr(), ax=plt.subplots()[1])
+        st.write(fig.get_figure())
+    except ValueError:
+        st.error("Data can not be plotted. Please check the data processing step!", icon='❌')
+    
+
+
 
 def main():
     try:
@@ -376,6 +398,7 @@ def main():
     except ValueError:
         st.error("No file is selected!")
     if data_processor:
+        get_input_data_heatmap(data_processor.data)
         problem_type = select_problem_type()
         data_processor = select_data(data_processor, problem_type)
         data_processor_split = split_data(data_processor, problem_type)
