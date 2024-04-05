@@ -121,8 +121,9 @@ def check_data():
     - data_processed (str): Indicates whether the data is raw or processed.
     """
     data_processed = st.radio(
-        "Is the data already processed or it is a Raw data",
-        ["***Raw***", "***Processed***"],
+        "Select state of data",
+        ["Raw", "Processed"],
+        horizontal=True
     )
     return data_processed
 
@@ -399,11 +400,11 @@ def main():
         st.error("No file is selected!")
     if data_processor:
         get_input_data_heatmap(data_processor.data)
+        data_process_status = check_data()
         problem_type = select_problem_type()
         data_processor = select_data(data_processor, problem_type)
         data_processor_split = split_data(data_processor, problem_type)
         if data_processor_split:
-            data_process_status = check_data()
             if data_process_status == "Raw":
                 data_processor_split = scale_data(data_processor_split)
             model_selected = select_model()
