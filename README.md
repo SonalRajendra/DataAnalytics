@@ -23,7 +23,7 @@ pip install -r requirements.txt
 Run UI
 
 ```
-streamlit run app.py
+streamlit run Home.py
 ```
 
 Run Tests
