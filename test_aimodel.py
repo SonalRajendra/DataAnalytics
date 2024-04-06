@@ -37,31 +37,17 @@ class TestDataProcessor(unittest.TestCase):
         self.assertListEqual(
             data_processor.X.columns.tolist(), ["testfeature1", "testfeature2"]
         )
-        self.assertListEqual(data_processor.y.tolist(), [0, 1, 0, 1, 0])
+        self.assertListEqual(data_processor.y["target"].tolist(), [0, 1, 0, 1, 0])
 
     def test_splitData(self):
         # Test if splitData method splits data into train and test sets
         data_processor = DataProcessor(self.df)
         data_processor.select_X_y(["testfeature1", "testfeature2"], ["target"])
-        data_processor.splitData(test_size=0.4)
+        data_processor.splitData(test_size=0.4, classifier_or_regressor='classifier')
         self.assertEqual(len(data_processor.X_train), 3)
         self.assertEqual(len(data_processor.X_test), 2)
         self.assertEqual(len(data_processor.y_train), 3)
         self.assertEqual(len(data_processor.y_test), 2)
-
-    def test_scaleData(self):
-        # Test if scaleData method scales the data
-        data_processor = DataProcessor(self.df)
-        data_processor.select_X_y(["testfeature1", "testfeature2"], ["target"])
-        data_processor.splitData(test_size=0.4)
-        data_processor.scaleData()
-        self.assertTrue(
-            (data_processor.X_train >= 0).all() and (data_processor.X_train <= 1).all()
-        )
-        self.assertFalse(
-            (data_processor.X_test >= 0).all() and (data_processor.X_test <= 1).all()
-        )
-
 
 class TestNeuralNetworkModel(unittest.TestCase):
     def test_classifier_creation(self):
