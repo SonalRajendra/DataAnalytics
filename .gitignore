@@ -9,3 +9,4 @@ main.py
 venv
 Dataset/*
 .vscode
+__pycache__/
