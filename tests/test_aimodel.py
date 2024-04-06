@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from xgboost import XGBClassifier, XGBRegressor
 
-from aimodel import (
+from src.aimodel import (
     DataProcessor,
     Evaluation,
     NeuralNetworkModel,

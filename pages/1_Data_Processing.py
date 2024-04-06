@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
-from data_process import Interpolation, OutlierDetection, Plotter, Smoothing
+from src.data_process import Interpolation, OutlierDetection, Plotter, Smoothing
 
 
 def upload_file():  # Function to display file uploader and process uploaded file
