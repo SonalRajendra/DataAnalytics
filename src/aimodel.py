@@ -12,6 +12,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from abc import ABC, abstractmethod
 
 
 class DataProcessor:
@@ -75,7 +76,49 @@ class DataProcessor:
         self.X_test = scaler.transform(self.X_test)
 
 
-class NeuralNetworkModel():
+class BaseMLModel(ABC):
+    @abstractmethod
+    def fit(self, X, y):
+        """
+        Train the model.
+
+        Parameters:
+        X (array-like): Training data.
+        y (array-like): Target values.
+
+        Returns:
+        None
+        """
+        pass
+
+    @abstractmethod
+    def predict(self, X):
+        """
+        Predict using the trained model.
+
+        Parameters:
+        X (array-like): Data to predict on.
+
+        Returns:
+        array-like: Predicted values.
+        """
+        pass
+
+    def train(self, X_train, y_train):
+        """
+        Train the model using the provided training data.
+
+        Parameters:
+        X_train (array-like): Training data.
+        y_train (array-like): Target values.
+
+        Returns:
+        None
+        """
+        pass
+
+
+class NeuralNetworkModel(BaseMLModel):
     """
     A wrapper class for Neural Network model, supporting both classification and regression.
     """
@@ -113,7 +156,6 @@ class NeuralNetworkModel():
             early_stopping=True,
         )
 
-    # Training the Neural Network model
     def train(self, X_train, y_train):
         """
         Trains the Neural Network model according to the given training data.
@@ -137,7 +179,7 @@ class NeuralNetworkModel():
         self.prediction = self.nn.predict(X_test)
 
 
-class RandomForestModel():
+class RandomForestModel(BaseMLModel):
     """
     A wrapper class for Random Forest model, supporting both classification and regression.
     """
@@ -189,7 +231,7 @@ class RandomForestModel():
         self.prediction = self.rf.predict(X_test)
 
 
-class XGBoostModel():
+class XGBoostModel(BaseMLModel):
     """
     A wrapper class for XGBoost model, supporting both classification and regression.
     """
@@ -336,7 +378,6 @@ class Evaluation:
         ax.scatter(self.y_test, self.y_test, color='black', label='Actual Values')
         # Scatter plot of predicted values
         ax.scatter(self.y_test, self.y_pred, color='red', alpha=0.5, label='Predicted Values')
-        #ax.scatter(self.y_test, self.y_pred, color="red", alpha=0.5)
         ax.set_title("Scatter Plot of Predicted vs. Actual Values")
         ax.set_xlabel("Actual Values")
         ax.set_ylabel("Predicted Values")
