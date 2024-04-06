@@ -7,8 +7,7 @@ import streamlit as st
 from data_process import Interpolation, OutlierDetection, Plotter, Smoothing
 
 
-# Function to display file uploader and process uploaded file
-def upload_file():
+def upload_file():  # Function to display file uploader and process uploaded file
     upload_bt_help_text = """
                             \nNote: 
                             \n*Each column in uploaded file should have only one header. 
@@ -32,17 +31,20 @@ def upload_file():
 
 
 def select_column(columns_list):
-    selected_columns = st.multiselect("Select a column", columns_list)
+    selected_columns = st.multiselect("Select column(s)", columns_list)
     return selected_columns
 
 
 def save_dataframe(cleaned_data, filename, filetype):
-    # Create a DataFrame from the cleaned data
-    df = pd.DataFrame(cleaned_data)
-    # Determine the file extension based on the selected filetype
-    if filetype.lower() == "csv":
-        # Save as CSV
-        return df.to_csv(index=False).encode("utf-8"), f"{filename}.csv", "text/csv"
+    df = pd.DataFrame(cleaned_data)  # Create a DataFrame from the cleaned data
+    if (
+        filetype.lower() == "csv"
+    ):  # Determine the file extension based on the selected filetype
+        return (
+            df.to_csv(index=False).encode("utf-8"),
+            f"{filename}.csv",
+            "text/csv",
+        )  # Save as CSV
     elif filetype.lower() == "excel":
         # Save as Excel
         return (
@@ -61,8 +63,9 @@ def save_dataframe(cleaned_data, filename, filetype):
         return None, None, None
 
 
-def plot_scatter_with_outliers(original_df, cleaned_df, column_names):
-    # Create a scatter plot for each column
+def plot_scatter_with_outliers(
+    original_df, cleaned_df, column_names
+):  # Create a scatter plot for each column
     for column in column_names:
         fig0, aj = plt.subplots()  # Creating a new figure and axes
         # Plotting original data
@@ -86,7 +89,6 @@ def plot_scatter_with_outliers(original_df, cleaned_df, column_names):
 
 
 def plot_scatter_multi_with_outliers(original_df, cleaned_df, column):
-    # Create a scatter plot for each column
     fig0, aj = plt.subplots()  # Creating a new figure and axes
     # Plotting original data
     aj.scatter(
@@ -106,31 +108,41 @@ def plot_scatter_multi_with_outliers(original_df, cleaned_df, column):
     aj.legend()  # Adding legend
     return fig0  # Returning the figure
 
-    # Function to display raw data
 
-
-def display_raw(df, selected_x_column, selected_y_column, chart_type):
+def display_raw(
+    df, selected_x_column, selected_y_column, chart_type
+):  # Function to display raw data
     if selected_x_column == "index":
         x_axis = df.index
+        if chart_type == "Line Chart":
+            raw_fig, ax = plt.subplots()  # Create a line chart
+            ax.plot(x_axis, df[selected_y_column], color="red")
+            ax.set_xlabel(selected_x_column)
+            ax.set_ylabel(selected_y_column)
+            return raw_fig
+        elif chart_type == "Bar Chart":
+            raw_fig, ax = plt.subplots()  # Create a bar chart
+            ax.bar(x_axis, df[selected_y_column], color="red")
+            ax.set_xlabel(selected_x_column)
+            ax.set_ylabel(selected_y_column)
+            return raw_fig
     else:
         x_axis = df[selected_x_column]
-
-    if chart_type == "Line Chart":
-        # Create a line chart
-        raw_fig, ax = plt.subplots()
-        ax.plot(x_axis, df[selected_y_column], color="red")
-        ax.set_xlabel(selected_x_column)
-        ax.set_ylabel(selected_y_column)
-        return raw_fig
-
-    elif chart_type == "Bar Chart":
-        # Create a bar chart
-        raw_fig, ax = plt.subplots()
-        ax.bar(x_axis, df[selected_y_column], color="red")
-        ax.set_xlabel(selected_x_column)
-        ax.set_ylabel(selected_y_column)
-        return raw_fig
-        # Function to display the result data
+        if chart_type == "Line Chart":
+            raw_fig, ax = plt.subplots()  # Create a line chart
+            ax.plot(x_axis, df[selected_y_column], color="red")
+            ax.set_xlabel(selected_x_column)
+            ax.set_ylabel(selected_y_column)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+            return raw_fig
+        elif chart_type == "Bar Chart":
+            raw_fig, ax = plt.subplots()  # Create a bar chart
+            ax.bar(x_axis, df[selected_y_column], color="red")
+            ax.set_xlabel(selected_x_column)
+            ax.set_ylabel(selected_y_column)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+            return raw_fig
+            # Function to display the result data
 
 
 def display_processed(
@@ -162,8 +174,7 @@ def display_processed(
     x_axis_labels = x_axis_date_strings[x_axis_ticks]
 
     if chart_type_f == "Line Chart":
-        # Create a line chart
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots()  # Create a line chart
         ax.plot(
             x_axis,
             cleaned_data[selected_y_column_f][:num_points],
@@ -184,8 +195,7 @@ def display_processed(
         return fig
 
     elif chart_type_f == "Bar Chart":
-        # Create a bar chart
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots()  # Create a bar chart
         ax.bar(
             x_axis,
             cleaned_data[selected_y_column_f][:num_points],
@@ -205,10 +215,10 @@ def display_processed(
         ax.legend()
         return fig
 
-        # Function to convert MATLAB serial date number to Python datetime object
 
-
-def matlab_to_datetime(matlab_time):
+def matlab_to_datetime(
+    matlab_time,
+):  # Function to convert MATLAB serial date number to Python datetime object
     # MATLAB serial date number starts from January 1, 0000, and Python's datetime starts from January 1, 0001
     # Need to adjust the offset by subtracting the MATLAB epoch offset
     python_epoch = datetime.datetime(1, 1, 1)
@@ -255,14 +265,12 @@ def main():
             st.session_state.stage = 0
         with st.expander("See Uploaded  Data"):
             st.write("User Data:", df)
-
             # Convert the 'Datum' column to Python datetime
             column_names = df.columns
             for column_name in column_names:
                 if "Datum" in column_name or "Matlab_Time" in column_name:
                     converted_dt = df["Datum"].apply(matlab_to_datetime)
                     df["Datum"] = converted_dt
-                    # df['Human_Readable_Time'] = df['Datum'].apply(matlab_to_datetime)
                     df.rename(columns={"Datum": "Processed Date Time"}, inplace=True)
                     st.write("User Data with updated DateTime:", df)
                     # Button to display result as a plot
@@ -285,42 +293,102 @@ def main():
                 else:
                     st.error("Invalid chart type selected.")
 
-                    # Read column and select from the uploaded file
-        columns_list = df.columns.tolist()
+        columns_list = (
+            df.columns.tolist()
+        )  # Read column and select from the uploaded file
         selected_columns = select_column(columns_list)
-        st.text("Choose below methods to perform on the selected column")
 
-        left, right = st.columns(2)
-        with left:
-            # Add a toggle for the toggle button
-            toggle_outlier = st.toggle("Outlier Detection")
-            # Check the state of the toggle button
-            if toggle_outlier:
-                outliers_option = st.radio(
-                    "Choose an outlier method",
-                    ["Z-Score Method", "IQR Method", "Isolation Forest"],
+        with st.expander("See Overview"):
+            st.subheader("Methods Overview:")
+
+            if st.checkbox("Outlier Detection", key="chk_outlier"):
+                outlier_text = """
+                                        \n1. Z-score Method: Identifies outliers by calculating the Z-scores for the dataset. The Z-score measures 
+                                        how many standard deviations a data point is from the mean. By setting a threshold, specifies the 
+                                        number of standard deviations away from the mean that constitutes an outlier. This threshold defines what is 
+                                        considered an outlier in your dataset.
+                                        \n2. Interquartile Range (IQR) Method: Detects outliers based on the Interquartile Range, 
+                                        identifying data points falling below the first quartile minus a threshold 
+                                        or above the third quartile plus a threshold. 
+                                        \n3. Isolation Forest Method: Utilizes the Isolation Forest algorithm to isolate outliers
+                                        by randomly selecting features and splitting data points into smaller groups.
+                                        """
+                st.markdown(outlier_text)
+                st.link_button(
+                    "Know More",
+                    "https://en.wikipedia.org/wiki/Outlier",
+                    help="Click here to know more aboout the above topics.",
                 )
-                if outliers_option in ["Z-Score Method", "IQR Method"]:
-                    threshold = st.slider(
-                        label="Threshold for outlier detection",
-                        min_value=0.1,
-                        max_value=5.0,
-                        value=1.0,
-                        step=0.1,
-                    )
-                elif outliers_option in ["Isolation Forest"]:
-                    contamination_rate = st.slider(
-                        label="Contamination rate for outlier detection",
-                        min_value=0.0,
-                        max_value=0.5,
-                        value=0.05,
-                        step=0.01,
-                    )
                 st.divider()
-                # Add a toggle for the toggle button
-        toggle_interpol = st.toggle("Data interpolation")
-        # Check the state of the toggle button
-        if toggle_interpol:
+
+            if st.checkbox("Data Interpolation", key="chk_interpol"):
+                interpol_text = """
+                                        \n1. Liner Interpolation: linear interpolation is a method of curve fitting using linear polynomials 
+                                        to construct new data points within the range of a discrete set of known data points. 
+                                        \n2. Quadratic Interpolation: qudratic interpolation is a method of curve fitting using second degree 
+                                        polynomials to construct new data points within the range of a discrete set of known data points. 
+                                        \n3. Cubic Interpolation: In cubic spline interpolation the interpolating function is a set of piecewise 
+                                        cubic functions between each of the data points. 
+                                        """
+                st.markdown(interpol_text)
+                st.link_button(
+                    "Know More",
+                    "https://nm.mathforcollege.com/NumericalMethodsTextbookUnabridged/chapter-05.05-spline-method-of-interpolation.html",
+                    help="Click here to know more aboout the above topics.",
+                )
+                st.divider()
+
+            if st.checkbox(" Data Smoothing", key="chk_smooth"):
+                smooth_text = """
+                                        \n1. Moving average: This method entails selecting a window of data points, computing their average, shifting the window by one point, 
+                                        and repeating the process. This iterative approach generates smoothed data points. 
+                                        \n2. Savitzky-Golay filter: A Savitzky–Golay filter smooths digital data points without distorting the signal tendency. It fits 
+                                        adjacent data subsets with a low-degree polynomial using linear least squares convolution."""
+                st.markdown(smooth_text)
+                st.link_button(
+                    "Know More",
+                    "https://pieriantraining.com/python-smoothing-data-a-comprehensive-guide/",
+                    help="Click here to know more aboout the above topics.",
+                )
+                st.divider()
+        text1 = """Choose below methods to perform on the selected column(s)"""
+        st.text(text1)
+
+        toggle_outlier = st.toggle("Outlier Detection")  # Toggle button for outlier
+        if toggle_outlier:  # Check the state of the toggle button
+            outliers_option = st.radio(
+                "Choose an outlier method",
+                ["Z-Score Method", "IQR Method", "Isolation Forest"],
+            )
+            if outliers_option in ["Z-Score Method", "IQR Method"]:
+                threshold = st.slider(
+                    label="Threshold for outlier detection",
+                    min_value=0.1,
+                    max_value=5.0,
+                    value=1.0,
+                    step=0.1,
+                )
+                st.info(
+                    "ℹ️ Threshold determines the distance from the mean at which data points are considered outliers, influencing the sensitivity of outlier detection."
+                )
+
+            elif outliers_option in ["Isolation Forest"]:
+                contamination_rate = st.slider(
+                    label="Contamination rate for outlier detection",
+                    min_value=0.0,
+                    max_value=0.5,
+                    value=0.05,
+                    step=0.01,
+                )
+                st.info(
+                    "ℹ️ The contamination rate represents the proportion of anomalies expected in the dataset and influences the sensitivity of outlier detection."
+                )
+            st.divider()
+
+        toggle_interpol = st.toggle(
+            "Data interpolation"
+        )  # Toggle button for interpolation
+        if toggle_interpol:  # Check the state of the toggle button
             interpolations_option = st.radio(
                 "Choose an Interpolation method", ["linear", "quadratic", "cubic"]
             )
@@ -329,11 +397,8 @@ def main():
             )  # Interpolations_option in ["linear", "quadratic","cubic"]
             st.divider()
 
-            # Add a toggle for the toggle button
-        toggle_smoothing = st.toggle("Data Smoothing")
-
-        # Check the state of the toggle button
-        if toggle_smoothing:
+        toggle_smoothing = st.toggle("Data Smoothing")  # Toggle button for smoothing
+        if toggle_smoothing:  # Check the state of the toggle button
             st.subheader("Smoothing Options")
             smoothing_option = st.radio(
                 "Choose a smoothing method", ["Moving Average", "Savitzky-Golay filter"]
@@ -342,12 +407,12 @@ def main():
             if smoothing_option == "Moving Average":
                 st.subheader("Smoothing Parameters")
 
-                # Help icon and details for moving average window size
-                st.write("Window Size for Moving Average:")
+                st.write(
+                    "Window Size for Moving Average:"
+                )  # Help icon and details for moving average window size
                 st.info(
                     "ℹ️ Window size controls the number of data points to consider for each moving average calculation."
                 )
-
                 filter_length = st.slider(
                     label="Window Size", min_value=1, max_value=100, value=10, step=1
                 )
@@ -355,11 +420,11 @@ def main():
             elif smoothing_option == "Savitzky-Golay filter":
                 st.subheader("Smoothing Parameters")
 
-                # Help icon and details for filter length
-                st.write("Filter Length for Smoothing:")
+                st.write(
+                    "Filter Length for Smoothing:"
+                )  # Help icon and details for filter length
                 st.info("""ℹ️ Filter length controls the size of the window used for smoothing. 
                         Choose it according to the characteristic length scale of your data.""")
-
                 filter_length1 = st.slider(
                     label="Filter Length",
                     min_value=0,
@@ -368,11 +433,11 @@ def main():
                     step=25,
                 )
 
-                # Help icon and details for order length
-                st.write("Order of Smoothing:")
+                st.write(
+                    "Order of Smoothing:"
+                )  # Help icon and details for order length
                 st.info("""ℹ️ The order of smoothing refers to the polynomial order used in 
                         the Savitzky-Golay filter. It must be less than the filter length.""")
-
                 order_length = st.slider(
                     label="Order of Smoothing",
                     min_value=1,
@@ -380,66 +445,11 @@ def main():
                     value=2,
                     step=1,
                 )
-
             st.divider()
-
-        with right:
-            if st.checkbox("Check here for overview.", key="chk_Overview"):
-                with st.sidebar:
-                    st.title("Overview:")
-
-                    if st.checkbox("Outlier Detection", key="chk_outlier"):
-                        outlier_text = """
-                                                \n1. Z-score Method: Identifies outliers by calculating the Z-scores for the dataset.
-                                                \n2. Isolation Forest Method: Utilizes the Isolation Forest algorithm to isolate outliers
-                                                    by randomly selecting features and splitting data points into smaller groups. 
-                                                \n3. Interquartile Range (IQR) Method: Detects outliers based on the Interquartile Range, 
-                                                identifying data points falling below the first quartile minus a threshold 
-                                                or above the third quartile plus a threshold.
-                                                """
-                        st.markdown(outlier_text)
-                        st.link_button(
-                            "Know More",
-                            "https://www.freecodecamp.org/news/how-to-detect-outliers-in-machine-learning/",
-                            help="Click here to know more aboout the above topics.",
-                        )
-                        st.divider()
-
-                    if st.checkbox("Data Interpolation", key="chk_interpol"):
-                        interpol_text = """
-                                                \n1. Liner Interpolation: linear interpolation is a method of curve fitting using linear polynomials 
-                                                to construct new data points within the range of a discrete set of known data points. 
-                                                \n2. Qudratic Interpolation: qudratic interpolation is a method of curve fitting using second degree 
-                                                polynomials to construct new data points within the range of a discrete set of known data points. 
-                                                \n3. Cubic Interpolation: In cubic spline interpolation the interpolating function is a set of piecewise 
-                                                cubic functions between each of the data points. 
-                                                """
-                        st.markdown(interpol_text)
-                        st.link_button(
-                            "Know More",
-                            "https://nm.mathforcollege.com/NumericalMethodsTextbookUnabridged/chapter-05.05-spline-method-of-interpolation.html",
-                            help="Click here to know more aboout the above topics.",
-                        )
-                        st.divider()
-
-                    if st.checkbox(" Data Smoothing", key="chk_smooth"):
-                        smooth_text = """
-                                                \n1. Moving average: This method entails selecting a window of data points, computing their average, shifting the window by one point, 
-                                                and repeating the process. This iterative approach generates smoothed data points. 
-                                                \n2. Savitzky-Golay filter: A Savitzky–Golay filter smooths digital data points without distorting the signal tendency. It fits 
-                                                adjacent data subsets with a low-degree polynomial using linear least squares convolution."""
-                        st.markdown(smooth_text)
-                        st.link_button(
-                            "Know More",
-                            "https://pieriantraining.com/python-smoothing-data-a-comprehensive-guide/",
-                            help="Click here to know more aboout the above topics.",
-                        )
-                        st.divider()
 
         left, center, right = st.columns(3)
         with left:
-            # Check the state of the toggle button
-            if st.session_state.stage == 0:
+            if st.session_state.stage == 0:  # Check the state of the preprocess button
                 st.button(
                     "Preprocess Data",
                     help="Click here to process the selected column for preprocessing",
@@ -449,13 +459,14 @@ def main():
         with right:
             st.button(
                 "Reset",
-                help="Click here to reset the process",
+                help="Click here to reset the process",  # Button to reset the output
                 on_click=set_state,
                 args=[0],
             )
 
-            # Add button to perform preprocessing (Outlier removal)
-        if toggle_outlier == True and st.session_state.stage >= 1:
+        if (
+            toggle_outlier == True and st.session_state.stage >= 1
+        ):  # Logic to perform preprocessing (Outlier removal)
             # Initialize class objects
             outlier_detection = OutlierDetection(df)
             outlier_plots = Plotter(df)
@@ -544,8 +555,9 @@ def main():
                 if Interpolated_data.empty:
                     raise FileNotFoundError
             except FileNotFoundError:
-                # If the file is empty or not present, use the original DataFrame df
-                Interpolated_data = df.copy()
+                Interpolated_data = (
+                    df.copy()
+                )  # If the file is empty or not present, use the original DataFrame df
 
             smoothing_detection = Smoothing(Interpolated_data)  # Intialise class object
 
