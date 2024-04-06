@@ -1,3 +1,4 @@
+import math
 import unittest
 
 import numpy as np
@@ -249,6 +250,16 @@ class TestEvaluation(unittest.TestCase):
         np.testing.assert_array_equal(
             confusion_matrix_actual, confusion_matrix_expected
         )
+    
+    def test_get_recall_score(self):
+        evaluation = Evaluation(self.y_test, self.y_pred)
+        recall_score = evaluation.get_recall_score()
+        self.assertAlmostEqual(math.ceil(recall_score), 1.0)
+
+    def test_mae(self):
+        evaluation = Evaluation(self.y_test, self.y_pred)
+        mae = evaluation.get_mae()
+        self.assertAlmostEqual(mae, 0, delta=0.2)
 
 
 if __name__ == "__main__":
