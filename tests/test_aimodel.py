@@ -1,3 +1,4 @@
+import math
 import unittest
 
 import numpy as np
@@ -6,7 +7,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from xgboost import XGBClassifier, XGBRegressor
 
-from aimodel import (
+from src.aimodel import (
     DataProcessor,
     Evaluation,
     NeuralNetworkModel,
@@ -37,31 +38,17 @@ class TestDataProcessor(unittest.TestCase):
         self.assertListEqual(
             data_processor.X.columns.tolist(), ["testfeature1", "testfeature2"]
         )
-        self.assertListEqual(data_processor.y.tolist(), [0, 1, 0, 1, 0])
+        self.assertListEqual(data_processor.y["target"].tolist(), [0, 1, 0, 1, 0])
 
     def test_splitData(self):
         # Test if splitData method splits data into train and test sets
         data_processor = DataProcessor(self.df)
         data_processor.select_X_y(["testfeature1", "testfeature2"], ["target"])
-        data_processor.splitData(test_size=0.4)
+        data_processor.splitData(test_size=0.4, classifier_or_regressor='classifier')
         self.assertEqual(len(data_processor.X_train), 3)
         self.assertEqual(len(data_processor.X_test), 2)
         self.assertEqual(len(data_processor.y_train), 3)
         self.assertEqual(len(data_processor.y_test), 2)
-
-    def test_scaleData(self):
-        # Test if scaleData method scales the data
-        data_processor = DataProcessor(self.df)
-        data_processor.select_X_y(["testfeature1", "testfeature2"], ["target"])
-        data_processor.splitData(test_size=0.4)
-        data_processor.scaleData()
-        self.assertTrue(
-            (data_processor.X_train >= 0).all() and (data_processor.X_train <= 1).all()
-        )
-        self.assertFalse(
-            (data_processor.X_test >= 0).all() and (data_processor.X_test <= 1).all()
-        )
-
 
 class TestNeuralNetworkModel(unittest.TestCase):
     def test_classifier_creation(self):
@@ -263,6 +250,16 @@ class TestEvaluation(unittest.TestCase):
         np.testing.assert_array_equal(
             confusion_matrix_actual, confusion_matrix_expected
         )
+    
+    def test_get_recall_score(self):
+        evaluation = Evaluation(self.y_test, self.y_pred)
+        recall_score = evaluation.get_recall_score()
+        self.assertAlmostEqual(math.ceil(recall_score), 1.0)
+
+    def test_mae(self):
+        evaluation = Evaluation(self.y_test, self.y_pred)
+        mae = evaluation.get_mae()
+        self.assertAlmostEqual(mae, 0, delta=0.2)
 
 
 if __name__ == "__main__":

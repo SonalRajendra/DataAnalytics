@@ -294,7 +294,7 @@ class Evaluation:
         Calculation of Recall Score of the model.
 
         Returns:
-        - float: MAE value.
+        - float: recall score
         """
         return recall_score(y_true=self.y_test, y_pred=self.y_pred)
 
