@@ -77,19 +77,19 @@ class DataProcessor:
 
 
 class BaseMLModel(ABC):
-    @abstractmethod
-    def fit(self, X, y):
-        """
-        Train the model.
-
-        Parameters:
-        X (array-like): Training data.
-        y (array-like): Target values.
-
-        Returns:
-        None
-        """
-        pass
+    #@abstractmethod
+    #def fit(self, X, y):
+    #    """
+    #    Train the model.
+#
+    #    Parameters:
+    #    X (array-like): Training data.
+    #    y (array-like): Target values.
+#
+    #    Returns:
+    #    None
+    #    """
+    #    pass
 
     @abstractmethod
     def predict(self, X):
@@ -104,6 +104,7 @@ class BaseMLModel(ABC):
         """
         pass
 
+    @abstractmethod
     def train(self, X_train, y_train):
         """
         Train the model using the provided training data.
