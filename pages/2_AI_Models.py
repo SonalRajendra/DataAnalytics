@@ -15,6 +15,8 @@ from src.aimodel import (
     XGBoostModel,
 )
 
+st.set_option("deprecation.showPyplotGlobalUse", False)
+
 st.title("AI based Classification and Regression Models")
 
 
@@ -47,7 +49,7 @@ def choose_dataset():
             uploaded_file_df = pd.read_csv(uploaded_file)
         elif file_extension in (".xlsx", ".xls"):
             uploaded_file_df = pd.read_excel(uploaded_file)
-        return DataProcessor(uploaded_file_df)
+        return DataProcessor(uploaded_file_df), uploaded_file_df
     return None
 
 
@@ -87,7 +89,7 @@ def select_data(data_processor, problem_type):
     y_columns = st.multiselect("Choose your Output Columns", columns)
     data_processor.select_X_y(X_columns, y_columns)
 
-    return data_processor
+    return data_processor, X_columns, y_columns
 
 
 def split_data(data_processor, problem_type):
@@ -101,7 +103,9 @@ def split_data(data_processor, problem_type):
     Returns:
     - data_processor (DataProcessor): An updated instance of the DataProcessor class.
     """
-    test_size_input = st.slider("Select test size for training the model", 0.1, 1.0, 0.25)
+    test_size_input = st.slider(
+        "Select test size for training the model", 0.1, 1.0, 0.25
+    )
     try:
         data_processor.splitData(
             test_size=test_size_input, classifier_or_regressor=problem_type
@@ -120,9 +124,7 @@ def check_data():
     - data_processed (str): Indicates whether the data is raw or processed.
     """
     data_processed = st.radio(
-        "Select state of data",
-        ["Raw", "Processed"],
-        horizontal=True
+        "Select state of data", ["Raw", "Processed"], horizontal=True
     )
     return data_processed
 
@@ -192,7 +194,7 @@ def get_training_config(model_option, selected_classifier_or_regressor):
             classifier_or_regressor=class_mapping_nn[selected_classifier_or_regressor],
             activation_fn=act_fn,
             no_of_layers=no_of_layers,
-            no_of_neurons=no_of_neurons
+            no_of_neurons=no_of_neurons,
         )
 
     elif model_option == "Random Forest":
@@ -381,27 +383,53 @@ def get_evaluation(model, data_processor_split, problem_type):
         st.subheader("Scatter Plot of Predicted vs. Actual Values", divider="red")
         st.pyplot(fig)
 
+
 def get_input_data_heatmap(df: pd.DataFrame):
-    st.subheader('Correlation between variables')
+    st.subheader("Correlation between variables")
     try:
-        fig=sns.heatmap(df.corr(), ax=plt.subplots()[1])
+        fig = sns.heatmap(df.corr(), ax=plt.subplots()[1])
         st.write(fig.get_figure())
     except ValueError:
-        st.error("Data can not be plotted. Please check the data processing step!", icon='❌')
-    
+        st.error(
+            "Data can not be plotted. Please check the data processing step!", icon="❌"
+        )
+
+
+def get_input_data_plots(output_cols, df):
+    df_num = df.drop(columns=output_cols).select_dtypes(include=["float64", "int64"])
+    df_num.hist(
+        figsize=(16, 20),
+        bins=30,
+        xlabelsize=15,
+        ylabelsize=15,
+        edgecolor="black",
+        color="red",
+    )
+    for ax in plt.gcf().get_axes():
+        ax.set_title(ax.get_title(), fontsize=25)
+    st.pyplot()
+
+
 def main():
     try:
-        data_processor = choose_dataset()
+        data_processor, uploaded_file_df = choose_dataset()
     except ValueError:
         st.error("No file is selected!")
+        return
+    except TypeError:
+        st.error("No file is selected!")
+        return
     if data_processor:
         get_input_data_heatmap(data_processor.data)
         data_process_status = check_data()
         problem_type = select_problem_type()
-        data_processor = select_data(data_processor, problem_type)
+        data_processor, input_cols, output_cols = select_data(
+            data_processor, problem_type
+        )
         if data_processor.X.empty:
             st.error("Input and output not selected")
             return
+        get_input_data_plots(input_cols, output_cols, df=uploaded_file_df)
         data_processor_split = split_data(data_processor, problem_type)
         if data_processor_split:
             if data_process_status == "Raw":
