@@ -85,7 +85,6 @@ def select_data(data_processor, problem_type):
     columns = data_processor.get_columns()
     X_columns = st.multiselect("Choose your Input Columns", columns)
     y_columns = st.multiselect("Choose your Output Columns", columns)
-    # data_processor.select_X_y(X_columns, y_columns, problem_type)
     data_processor.select_X_y(X_columns, y_columns)
 
     return data_processor
@@ -193,7 +192,7 @@ def get_training_config(model_option, selected_classifier_or_regressor):
             classifier_or_regressor=class_mapping_nn[selected_classifier_or_regressor],
             activation_fn=act_fn,
             no_of_layers=no_of_layers,
-            no_of_neurons=no_of_neurons,
+            no_of_neurons=no_of_neurons
         )
 
     elif model_option == "Random Forest":
@@ -390,9 +389,6 @@ def get_input_data_heatmap(df: pd.DataFrame):
     except ValueError:
         st.error("Data can not be plotted. Please check the data processing step!", icon='❌')
     
-
-
-
 def main():
     try:
         data_processor = choose_dataset()
@@ -403,6 +399,9 @@ def main():
         data_process_status = check_data()
         problem_type = select_problem_type()
         data_processor = select_data(data_processor, problem_type)
+        if data_processor.X.empty:
+            st.error("Input and output not selected")
+            return
         data_processor_split = split_data(data_processor, problem_type)
         if data_processor_split:
             if data_process_status == "Raw":
