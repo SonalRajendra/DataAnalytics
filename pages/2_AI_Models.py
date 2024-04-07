@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 import seaborn as sns
 import streamlit as st
@@ -391,7 +392,8 @@ def get_heatmap(df: pd.DataFrame):
         st.write(fig.get_figure())
     except ValueError:
         st.error(
-            "Heatmap can not be plotted. Please check the data processing step!", icon="❌"
+            "Heatmap can not be plotted. Please check the data processing step!",
+            icon="❌",
         )
 
 

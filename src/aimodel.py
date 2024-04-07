@@ -1,6 +1,9 @@
+from abc import ABC, abstractmethod
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from imblearn.over_sampling import RandomOverSampler
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.metrics import (
     accuracy_score,
@@ -12,15 +15,13 @@ from sklearn.metrics import (
     recall_score,
 )
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from abc import ABC, abstractmethod
-from imblearn.over_sampling import RandomOverSampler
 
 
 class DataProcessor:
     """
     This class performs the processings required for trainning the AI model
     """
+
     def __init__(self, df: pd.DataFrame) -> None:
         """
         Initialize DataProcessor object with a pandas dataframe
@@ -38,10 +39,8 @@ class DataProcessor:
         - list: List of column names.
         """
         return self.data.columns.values.tolist()
-    
-    def select_X_y(
-        self, X_columns: list, y_columns: list
-    ):
+
+    def select_X_y(self, X_columns: list, y_columns: list):
         """
         Select X and y columns from the given dataset.
 
@@ -364,16 +363,17 @@ class Evaluation:
 
     def scatter_plot_predicted_vs_actual(self):
         """
-        Scattered plot of Predicted and Actual values 
+        Scattered plot of Predicted and Actual values
         """
         fig, ax = plt.subplots(figsize=(8, 6))
-        # Scatter plot of actual values
-        ax.scatter(self.y_test, self.y_test, color='black', label='Actual Values')
+        # Scatter plot of regression line assuming a simple linear regression line
+        ax.scatter(self.y_test, self.y_test, color="black", label="Actual Values")
         # Scatter plot of predicted values
-        ax.scatter(self.y_test, self.y_pred, color='red', alpha=0.5, label='Predicted Values')
+        ax.scatter(
+            self.y_test, self.y_pred, color="red", alpha=0.5, label="Predicted Values"
+        )
         ax.set_title("Scatter Plot of Predicted vs. Actual Values")
         ax.set_xlabel("Actual Values")
         ax.set_ylabel("Predicted Values")
         ax.grid(True)
         return fig
-
