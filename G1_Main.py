@@ -10,21 +10,26 @@ from sklearn.ensemble import IsolationForest
 Classes and Methods Used:
 - Class: OutlierDetection
   - Method: detect_outliers_zscore_drop
+          Parameter: Threshold
   - Method: detect_outliers_iqr_drop
+          Parameter: Threshold
   - Method: detect_outliers_isof_drop
+          Parameter: Contamination Rate
 
 - Class: Plotter
   - Method: plot_interpolated
 
 - Class: Smoothing
   - Method: moving_average
+          Parameter: Window Length
   - Method: savitzky_golay
+          Parameter: Window Length
+          Parameter: Order
 
 - Class: Interpolation
   - Method: interpolation
+          Parameter: Method
 
-- Class: TimeConverter
-  - Method: Time_Converter
 """
  
 """
