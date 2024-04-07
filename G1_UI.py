@@ -5,14 +5,7 @@ import matplotlib.pyplot as plt
 from G1_Main import OutlierDetection, Smoothing, Interpolation, Plotter
                                                                                         
 def upload_file():                                                                      # Function to display file uploader and process uploaded file
-    upload_bt_help_text = """
-                            \nNote: 
-                            \n*Each column in uploaded file should have only one header. 
-                            \n*Column names should not be in brackets (). 
-                            \n*Ensure Units if required.
-                            """
-    uploaded_file = st.file_uploader("Upload file", type=["csv","xlsx","xls"], 
-                                     help=upload_bt_help_text)
+    uploaded_file = st.file_uploader("Upload file ☁️", type=["csv","xlsx","xls"])
     if uploaded_file is not None:
         if uploaded_file.name.endswith('.csv'):
             df = pd.read_csv(uploaded_file)
@@ -99,7 +92,7 @@ def display_raw(df, selected_x_column, selected_y_column, chart_type):          
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
             return raw_fig
                                                                                         # Function to display the result data
-def display_processed(Interpolated_data, cleaned_data, selected_x_column_f, selected_y_column_f, chart_type_f, num_points):
+def display_processed(cleaned_data, selected_x_column_f, selected_y_column_f, chart_type_f, num_points):
     if selected_x_column_f == "index":
         x_axis = cleaned_data.index[:num_points]
         if isinstance(x_axis, pd.DatetimeIndex):                                        # Check if x_axis is already datetime index
@@ -116,8 +109,7 @@ def display_processed(Interpolated_data, cleaned_data, selected_x_column_f, sele
  
     if chart_type_f == "Line Chart":
         fig, ax = plt.subplots()                                                        # Create a line chart
-        ax.plot(x_axis, cleaned_data[selected_y_column_f][:num_points], color='red', label='Smooth Data')
-        ax.plot(x_axis, Interpolated_data[selected_y_column_f][:num_points], color='blue', label='Interpolated Data')  
+        ax.plot(x_axis, cleaned_data[selected_y_column_f][:num_points], color='red', label='Processed Data')  
         ax.set_xlabel(selected_x_column_f)
         ax.set_ylabel(selected_y_column_f)
         ax.set_xticks(x_axis_ticks)
@@ -127,8 +119,7 @@ def display_processed(Interpolated_data, cleaned_data, selected_x_column_f, sele
        
     elif chart_type_f == "Bar Chart":
         fig, ax = plt.subplots()                                                        # Create a bar chart
-        ax.bar(x_axis, cleaned_data[selected_y_column_f][:num_points], color='red', label='Smooth Data')
-        ax.bar(x_axis, Interpolated_data[selected_y_column_f][:num_points], color='blue', label='Interpolated Data')  
+        ax.bar(x_axis, cleaned_data[selected_y_column_f][:num_points], color='red', label='Processed Data')
         ax.set_xlabel(selected_x_column_f)
         ax.set_ylabel(selected_y_column_f)
         ax.set_xticks(x_axis_ticks)
@@ -160,7 +151,32 @@ def set_state(i):
 
                                                                                         # Main function to run the Streamlit app
 def main():
-    st.title("Data Filteration and Linearization Tool")
+    st.title("Data Filteration and Linearization Tool 🧰⚙️⛏️")
+    with st.expander("User Guide 🦮"):
+        st.subheader("Notes for user")
+        preq = """\n👉 Each column in uploaded file should have only one header. 
+                \n👉 Column names should not be in brackets (). 
+                \n👉 Ensure Units if required. e.g. 'Time(Sec)'.
+                \n👉 If the time series data the select Date/Time column on x-axis for better visualization.
+                \n👉 Don't select index or Date/Time column on y-axis. 
+                \n👉 If Column name is Datum and if it's in Matlab time format it will be converted to UTC format.
+                 
+                """
+        st.write(preq)
+        st.subheader("Steps for Pre-Processing Data:")
+        steps = """                  
+                    \nStep 1. Upload File: Begin by uploading the dataset you wish to process.
+                    \nStep 2. Select Column(s): Choose the columns you want to process from the uploaded file.
+                    \nStep 3. Choose Method(s): Select from various methods like Outlier Recognition, Interpolation, or Smoothing. 
+                    Click "See Overview" for detailed insights into each method.
+                    \nStep 4: Click on 'Pre-process Data' button to get results.
+                    \nStep 5. View Cleaned Data: Explore the cleaned data separately for each method.
+                    \nStep 6. Visualize Results: Under "See Result Data," customize your visualization by selecting the graph type, x-axis, and y-axis columns to view the processed data.
+                    \nStep 7. Download Output: Enter your preferred file name and type, then click to download the processed data file.
+                    Columns that are processed will have a prefix to the header (e.g. Column 'Speed(m/s)' after processing
+                    it will be 'p_Speed(m/s)'. 
+                    """
+        st.write(steps)
     st.divider()
     df = upload_file()
     if df is not None:
@@ -223,8 +239,8 @@ def main():
                                         to construct new data points within the range of a discrete set of known data points. 
                                         \n2. Quadratic Interpolation: qudratic interpolation is a method of curve fitting using second degree 
                                         polynomials to construct new data points within the range of a discrete set of known data points. 
-                                        \n3. Cubic Interpolation: In cubic spline interpolation the interpolating function is a set of piecewise 
-                                        cubic functions between each of the data points. 
+                                        \n3. Cubic Interpolation: In cubic spline interpolation the interpolating function is a set of piece wise
+                                        cubic functions between each of the data points.
                                         """
                         st.markdown(interpol_text)
                         st.link_button("Know More", 
@@ -248,20 +264,24 @@ def main():
                                                                                         
         toggle_outlier = st.toggle("Outlier Detection")                                 # Toggle button for outlier                                                                         
         if toggle_outlier:                                                              # Check the state of the toggle button
+            st.subheader("Outlier Options")
             outliers_option = st.radio("Choose an outlier method", ["Z-Score Method", "IQR Method", "Isolation Forest"])
             if outliers_option in ["Z-Score Method", "IQR Method"]:
+                st.subheader("Outlier Parameters")
                 threshold = st.slider(label = "Threshold for outlier detection" , min_value = 0.1 , max_value = 5.0 , value = 1.0 , step = 0.1)
                 st.info("ℹ️ Threshold determines the distance from the mean at which data points are considered outliers, influencing the sensitivity of outlier detection.")
 
             elif outliers_option in ["Isolation Forest"]:
+                st.subheader("Outlier Parameters")
                 contamination_rate = st.slider(label = "Contamination rate for outlier detection" , min_value = 0.0 , max_value = 0.5 , value = 0.05 , step = 0.01)
                 st.info("ℹ️ The contamination rate represents the proportion of anomalies expected in the dataset and influences the sensitivity of outlier detection.")
             st.divider()
                                                                                         
         toggle_interpol = st.toggle("Data interpolation")                               # Toggle button for interpolation                                                      
         if toggle_interpol:                                                             # Check the state of the toggle button
+            st.subheader("Interpolation Options")
             interpolations_option = st.radio("Choose an Interpolation method", ["linear", "quadratic", "cubic"])
-            st.write(f"Interpolation method selected: {interpolations_option}")         # Interpolations_option in ["linear", "quadratic","cubic"]
+            st.write(f"Interpolation method selected: {interpolations_option}")         # Interpolations_option in ["linear", "quadratic", "cubic"]
             st.divider()
                                                                                         
         toggle_smoothing = st.toggle("Data Smoothing")                                  # Toggle button for smoothing                                                                        
@@ -359,14 +379,13 @@ def main():
                                                                                         # Perform smoothing
         if  toggle_smoothing == True and  st.session_state.stage >= 1:
             try:
-                Interpolated_data = pd.read_csv('Interpolated_data.csv')
-                if Interpolated_data.empty:
+                smooth_input = pd.read_csv('Interpolated_data.csv')
+                if smooth_input.empty:
                     raise FileNotFoundError
             except FileNotFoundError:
-                Interpolated_data = df.copy()                                           # If the file is empty or not present, use the original DataFrame df
+                smooth_input = df.copy()                                           # If the file is empty or not present, use the original DataFrame df
                 
-
-            smoothing_detection = Smoothing(Interpolated_data)                          # Intialise class object
+            smoothing_detection = Smoothing(smooth_input)                          # Intialise class object
 
             if smoothing_option in ["Moving Average"]:
                 smoothing_result = smoothing_detection.moving_average(selected_columns,filter_length)
@@ -377,20 +396,22 @@ def main():
                 smoothing_result = smoothing_detection.savitzky_golay(selected_columns,filter_length1,order_length)                                                   
                 st.write("Savitzky-Golay result", smoothing_result)
                 cleaned_data = smoothing_result
-                                                                                        
-            with st.expander("See Smooth Result Data"):                                 # Show result                                               
-                chart_types_f = ["Line Chart", "Bar Chart"]                             # Available chart types                                                                        
-                chart_type_f = st.selectbox("Select Chart  Type", chart_types_f)        # Selectbox for choosing chart type 
+
+        if st.session_state.stage >= 1:                                                                                
+            with st.expander("See Result Data"):                                            # Show result                                               
+                chart_types_f = ["Line Chart", "Bar Chart"]                                 # Available chart types                                                                        
+                chart_type_f = st.selectbox("Select Chart  Type", chart_types_f)            # Selectbox for choosing chart type 
 
                 columns_list_f = df.columns.tolist()
                 selected_x_column_f = st.selectbox("Select X-axis Column", ["index"] + columns_list_f)
                 selected_y_column_f = st.selectbox("Select Y-axis Column", columns_list_f)
-
-                num_points = st.number_input("Select Number of Points to Plot", min_value=0, max_value=2000, value=1000, step=10)
+                
+                max_row_count = len(df)
+                num_points = st.number_input("Select Number of Points to Plot", min_value=1, max_value=max_row_count, value=1000, step=10)
 
                 if st.button("Display  Result"):
                     Interpolated_data = pd.read_csv('Interpolated_data.csv')
-                    result_chart = display_processed(Interpolated_data, cleaned_data,selected_x_column_f,selected_y_column_f, chart_type_f, num_points)
+                    result_chart = display_processed(cleaned_data,selected_x_column_f,selected_y_column_f, chart_type_f, num_points)
                     if result_chart is not None:
                         st.pyplot(result_chart)
                     else:
@@ -417,6 +438,7 @@ def main():
 
         if st.session_state.stage >= 3:
             st.write('The file is saved')
+            st.balloons()                                                               
             st.button('Start Over', on_click=set_state, args=[0])                       #Reset the buttong state so user can start over
 
 if __name__ == "__main__":

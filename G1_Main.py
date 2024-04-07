@@ -71,7 +71,7 @@ class OutlierDetection:
             column_data = self.df[column_name]                       # Extracting column data
             isolation_forest = IsolationForest(max_samples=100, contamination=contamination_rate, random_state=42)
             isolation_forest_outliers = isolation_forest.fit_predict(column_data.values.reshape(-1, 1))
-            outliers_mask = isolation_forest_outliers == -1                                                       
+            outliers_mask = isolation_forest_outliers == -1          # Ceates a boolean mask where True indicates the presence of an outlier                                     
             cleaned_data_df.loc[outliers_mask, column_name] = np.nan # Replace outliers with NaN values
         return cleaned_data_df
 
@@ -81,7 +81,7 @@ Class for Plotter
 
 class Plotter:
     def __init__(self, df):
-        self.df = pd.DataFrame(df)                                                # Initializing class with a DataFrame
+        self.df = pd.DataFrame(df)                                  # Initializing class with a DataFrame
                                                                     
     def plot_interpolated(self, df, selected_column):               # Function to plot interpolated data
                                                                     
@@ -144,7 +144,8 @@ class Interpolation:
                                                                    # Interpolating using specified method
                 df[column_name] = df[[column_name]].interpolate(method=method)
                                                                    # Filling any remaining NaN values
-                df[column_name] = df[[column_name]].interpolate(method='bfill')  
+                df[column_name] = df[[column_name]].interpolate(method='bfill')
+                df[column_name] = df[[column_name]].interpolate(methpd='ffill')  
             else:
                                                                    # Raise an error if the interpolation method is invalid
                 raise ValueError("Invalid interpolation method. Please choose one of the following: {}".format(self.available_methods))
