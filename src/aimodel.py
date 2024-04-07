@@ -1,6 +1,10 @@
+from abc import ABC, abstractmethod
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from imblearn.over_sampling import RandomOverSampler
+from sklearn.discriminant_analysis import StandardScaler
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
@@ -11,13 +15,13 @@ from sklearn.metrics import (
     recall_score,
 )
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
 
 
 class DataProcessor:
     """
     This class performs the processings required for trainning the AI model
     """
+
     def __init__(self, df: pd.DataFrame) -> None:
         """
         Initialize DataProcessor object with a pandas dataframe
@@ -35,10 +39,8 @@ class DataProcessor:
         - list: List of column names.
         """
         return self.data.columns.values.tolist()
-    
-    def select_X_y(
-        self, X_columns: list, y_columns: list
-    ):
+
+    def select_X_y(self, X_columns: list, y_columns: list):
         """
         Select X and y columns from the given dataset.
 
@@ -48,6 +50,10 @@ class DataProcessor:
         """
         self.X = self.data[X_columns]
         self.y = self.data[y_columns]
+
+    def resample_data(self):
+        ros = RandomOverSampler(random_state=42)
+        self.X, self.y = ros.fit_resample(self.X, self.y)
 
     def splitData(self, test_size: float, classifier_or_regressor: str):
         """
@@ -70,12 +76,41 @@ class DataProcessor:
         """
         Scales the dataset to unit variance by removing the mean. It is required if the data is not pre-processed.
         """
-        scaler = MinMaxScaler()
+        scaler = StandardScaler()
         self.X_train = scaler.fit_transform(self.X_train)
         self.X_test = scaler.transform(self.X_test)
 
 
-class NeuralNetworkModel():
+class BaseMLModel(ABC):
+    @abstractmethod
+    def predict(self, X):
+        """
+        Predict using the trained model.
+
+        Parameters:
+        X (array-like): Data to predict on.
+
+        Returns:
+        array-like: Predicted values.
+        """
+        pass
+
+    @abstractmethod
+    def train(self, X_train, y_train):
+        """
+        Train the model using the provided training data.
+
+        Parameters:
+        X_train (array-like): Training data.
+        y_train (array-like): Target values.
+
+        Returns:
+        None
+        """
+        pass
+
+
+class NeuralNetworkModel(BaseMLModel):
     """
     A wrapper class for Neural Network model, supporting both classification and regression.
     """
@@ -109,11 +144,10 @@ class NeuralNetworkModel():
             alpha=0.001,
             solver="lbfgs",
             max_iter=100000,
-            random_state=42,
+            random_state=1,
             early_stopping=True,
         )
 
-    # Training the Neural Network model
     def train(self, X_train, y_train):
         """
         Trains the Neural Network model according to the given training data.
@@ -137,7 +171,7 @@ class NeuralNetworkModel():
         self.prediction = self.nn.predict(X_test)
 
 
-class RandomForestModel():
+class RandomForestModel(BaseMLModel):
     """
     A wrapper class for Random Forest model, supporting both classification and regression.
     """
@@ -160,9 +194,9 @@ class RandomForestModel():
         self.rf = classifier_or_regressor(
             n_estimators=n_estimators,
             criterion=criterion,
-            max_depth=None,
-            min_samples_split=10,
-            min_samples_leaf=2,
+            max_depth=10,
+            min_samples_split=5,
+            min_samples_leaf=1,
             random_state=20,
         )
 
@@ -189,7 +223,7 @@ class RandomForestModel():
         self.prediction = self.rf.predict(X_test)
 
 
-class XGBoostModel():
+class XGBoostModel(BaseMLModel):
     """
     A wrapper class for XGBoost model, supporting both classification and regression.
     """
@@ -329,17 +363,17 @@ class Evaluation:
 
     def scatter_plot_predicted_vs_actual(self):
         """
-        Scattered plot of Predicted and Actual values 
+        Scattered plot of Predicted and Actual values
         """
         fig, ax = plt.subplots(figsize=(8, 6))
-        # Scatter plot of actual values
-        ax.scatter(self.y_test, self.y_test, color='black', label='Actual Values')
+        # Scatter plot of regression line assuming a simple linear regression line
+        ax.scatter(self.y_test, self.y_test, color="black", label="Actual Values")
         # Scatter plot of predicted values
-        ax.scatter(self.y_test, self.y_pred, color='red', alpha=0.5, label='Predicted Values')
-        #ax.scatter(self.y_test, self.y_pred, color="red", alpha=0.5)
+        ax.scatter(
+            self.y_test, self.y_pred, color="red", alpha=0.5, label="Predicted Values"
+        )
         ax.set_title("Scatter Plot of Predicted vs. Actual Values")
         ax.set_xlabel("Actual Values")
         ax.set_ylabel("Predicted Values")
         ax.grid(True)
         return fig
-

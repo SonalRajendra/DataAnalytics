@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 import seaborn as sns
 import streamlit as st
@@ -14,6 +15,8 @@ from src.aimodel import (
     RandomForestModel,
     XGBoostModel,
 )
+
+st.set_option("deprecation.showPyplotGlobalUse", False)
 
 st.title("AI based Classification and Regression Models")
 
@@ -85,10 +88,9 @@ def select_data(data_processor, problem_type):
     columns = data_processor.get_columns()
     X_columns = st.multiselect("Choose your Input Columns", columns)
     y_columns = st.multiselect("Choose your Output Columns", columns)
-    # data_processor.select_X_y(X_columns, y_columns, problem_type)
     data_processor.select_X_y(X_columns, y_columns)
 
-    return data_processor
+    return data_processor, X_columns, y_columns
 
 
 def split_data(data_processor, problem_type):
@@ -102,7 +104,9 @@ def split_data(data_processor, problem_type):
     Returns:
     - data_processor (DataProcessor): An updated instance of the DataProcessor class.
     """
-    test_size_input = st.slider("Select test size for training the model", 0.1, 1.0, 0.25)
+    test_size_input = st.slider(
+        "Select test size for training the model", 0.1, 1.0, 0.25
+    )
     try:
         data_processor.splitData(
             test_size=test_size_input, classifier_or_regressor=problem_type
@@ -121,14 +125,12 @@ def check_data():
     - data_processed (str): Indicates whether the data is raw or processed.
     """
     data_processed = st.radio(
-        "Select state of data",
-        ["Raw", "Processed"],
-        horizontal=True
+        "Select state of data", ["Raw", "Processed"], horizontal=True
     )
     return data_processed
 
 
-def scale_data(data_processor):
+def scale_data(data_processor: DataProcessor):
     """
     Scales the data if it is raw for smoothning purpose.
 
@@ -382,15 +384,33 @@ def get_evaluation(model, data_processor_split, problem_type):
         st.subheader("Scatter Plot of Predicted vs. Actual Values", divider="red")
         st.pyplot(fig)
 
-def get_input_data_heatmap(df: pd.DataFrame):
-    st.subheader('Correlation between variables')
+
+def get_heatmap(df: pd.DataFrame):
+    st.subheader("Correlation between variables")
     try:
-        fig=sns.heatmap(df.corr(), ax=plt.subplots()[1])
+        fig = sns.heatmap(df.corr(), ax=plt.subplots()[1])
         st.write(fig.get_figure())
     except ValueError:
-        st.error("Data can not be plotted. Please check the data processing step!", icon='❌')
-    
+        st.error(
+            "Heatmap can not be plotted. Please check the data processing step!",
+            icon="❌",
+        )
 
+
+def get_distribution(df):
+    st.subheader("Data Distribution")
+    df_num = df.select_dtypes(include=["float64", "int64"])
+    df_num.hist(
+        figsize=(16, 20),
+        bins=30,
+        xlabelsize=15,
+        ylabelsize=15,
+        edgecolor="black",
+        color="red",
+    )
+    for ax in plt.gcf().get_axes():
+        ax.set_title(ax.get_title(), fontsize=25)
+    st.pyplot()
 
 
 def main():
@@ -398,15 +418,26 @@ def main():
         data_processor = choose_dataset()
     except ValueError:
         st.error("No file is selected!")
+        return
     if data_processor:
-        get_input_data_heatmap(data_processor.data)
-        data_process_status = check_data()
+        get_heatmap(data_processor.data)
+        get_distribution(data_processor.data)
+        # data_process_status = check_data()
         problem_type = select_problem_type()
-        data_processor = select_data(data_processor, problem_type)
+        data_processor, input_cols, output_cols = select_data(
+            data_processor, problem_type
+        )
+        if problem_type == "Classification":
+            try:
+                data_processor.resample_data()
+            except ValueError:
+                pass
+        if data_processor.X.empty:
+            st.error("Input and output not selected")
+            return
         data_processor_split = split_data(data_processor, problem_type)
         if data_processor_split:
-            if data_process_status == "Raw":
-                data_processor_split = scale_data(data_processor_split)
+            data_processor_split.scaleData()
             model_selected = select_model()
             model = get_training_config(model_selected, problem_type)
             model, status = train_model(model, data_processor_split)
