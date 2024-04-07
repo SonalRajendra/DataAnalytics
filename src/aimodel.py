@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.discriminant_analysis import StandardScaler
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
@@ -13,6 +14,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from abc import ABC, abstractmethod
+from imblearn.over_sampling import RandomOverSampler
 
 
 class DataProcessor:
@@ -50,6 +52,10 @@ class DataProcessor:
         self.X = self.data[X_columns]
         self.y = self.data[y_columns]
 
+    def resample_data(self):
+        ros = RandomOverSampler(random_state=42)
+        self.X, self.y = ros.fit_resample(self.X, self.y)
+
     def splitData(self, test_size: float, classifier_or_regressor: str):
         """
         Split the dataset into training and testing datasets.
@@ -71,26 +77,12 @@ class DataProcessor:
         """
         Scales the dataset to unit variance by removing the mean. It is required if the data is not pre-processed.
         """
-        scaler = MinMaxScaler()
+        scaler = StandardScaler()
         self.X_train = scaler.fit_transform(self.X_train)
         self.X_test = scaler.transform(self.X_test)
 
 
 class BaseMLModel(ABC):
-    #@abstractmethod
-    #def fit(self, X, y):
-    #    """
-    #    Train the model.
-#
-    #    Parameters:
-    #    X (array-like): Training data.
-    #    y (array-like): Target values.
-#
-    #    Returns:
-    #    None
-    #    """
-    #    pass
-
     @abstractmethod
     def predict(self, X):
         """
@@ -153,7 +145,7 @@ class NeuralNetworkModel(BaseMLModel):
             alpha=0.001,
             solver="lbfgs",
             max_iter=100000,
-            random_state=42,
+            random_state=1,
             early_stopping=True,
         )
 
@@ -203,9 +195,9 @@ class RandomForestModel(BaseMLModel):
         self.rf = classifier_or_regressor(
             n_estimators=n_estimators,
             criterion=criterion,
-            max_depth=None,
-            min_samples_split=10,
-            min_samples_leaf=2,
+            max_depth=10,
+            min_samples_split=5,
+            min_samples_leaf=1,
             random_state=20,
         )
 

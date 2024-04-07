@@ -129,7 +129,7 @@ def check_data():
     return data_processed
 
 
-def scale_data(data_processor):
+def scale_data(data_processor: DataProcessor):
     """
     Scales the data if it is raw for smoothning purpose.
 
@@ -420,18 +420,22 @@ def main():
     if data_processor:
         get_heatmap(data_processor.data)
         get_distribution(data_processor.data)
-        data_process_status = check_data()
+        # data_process_status = check_data()
         problem_type = select_problem_type()
         data_processor, input_cols, output_cols = select_data(
             data_processor, problem_type
         )
+        if problem_type == "Classification":
+            try:
+                data_processor.resample_data()
+            except ValueError:
+                pass
         if data_processor.X.empty:
             st.error("Input and output not selected")
             return
         data_processor_split = split_data(data_processor, problem_type)
         if data_processor_split:
-            if data_process_status == "Raw":
-                data_processor_split = scale_data(data_processor_split)
+            data_processor_split.scaleData()
             model_selected = select_model()
             model = get_training_config(model_selected, problem_type)
             model, status = train_model(model, data_processor_split)
