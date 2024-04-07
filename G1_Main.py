@@ -29,7 +29,6 @@ Classes and Methods Used:
 - Class: Interpolation
   - Method: interpolation
           Parameter: Method
-
 """
  
 """
