@@ -49,7 +49,7 @@ def choose_dataset():
             uploaded_file_df = pd.read_csv(uploaded_file)
         elif file_extension in (".xlsx", ".xls"):
             uploaded_file_df = pd.read_excel(uploaded_file)
-        return DataProcessor(uploaded_file_df), uploaded_file_df
+        return DataProcessor(uploaded_file_df)
     return None
 
 
@@ -384,19 +384,20 @@ def get_evaluation(model, data_processor_split, problem_type):
         st.pyplot(fig)
 
 
-def get_input_data_heatmap(df: pd.DataFrame):
+def get_heatmap(df: pd.DataFrame):
     st.subheader("Correlation between variables")
     try:
         fig = sns.heatmap(df.corr(), ax=plt.subplots()[1])
         st.write(fig.get_figure())
     except ValueError:
         st.error(
-            "Data can not be plotted. Please check the data processing step!", icon="❌"
+            "Heatmap can not be plotted. Please check the data processing step!", icon="❌"
         )
 
 
-def get_input_data_plots(output_cols, df):
-    df_num = df.drop(columns=output_cols).select_dtypes(include=["float64", "int64"])
+def get_distribution(df):
+    st.subheader("Data Distribution")
+    df_num = df.select_dtypes(include=["float64", "int64"])
     df_num.hist(
         figsize=(16, 20),
         bins=30,
@@ -412,15 +413,13 @@ def get_input_data_plots(output_cols, df):
 
 def main():
     try:
-        data_processor, uploaded_file_df = choose_dataset()
+        data_processor = choose_dataset()
     except ValueError:
         st.error("No file is selected!")
         return
-    except TypeError:
-        st.error("No file is selected!")
-        return
     if data_processor:
-        get_input_data_heatmap(data_processor.data)
+        get_heatmap(data_processor.data)
+        get_distribution(data_processor.data)
         data_process_status = check_data()
         problem_type = select_problem_type()
         data_processor, input_cols, output_cols = select_data(
@@ -429,7 +428,6 @@ def main():
         if data_processor.X.empty:
             st.error("Input and output not selected")
             return
-        get_input_data_plots(input_cols, output_cols, df=uploaded_file_df)
         data_processor_split = split_data(data_processor, problem_type)
         if data_processor_split:
             if data_process_status == "Raw":
