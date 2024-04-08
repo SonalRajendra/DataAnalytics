@@ -410,7 +410,7 @@ def main():
                 selected_y_column_f = st.selectbox("Select Y-axis Column", columns_list_f)
                 
                 max_row_count = len(df)
-                num_points = st.number_input("Select Number of Points to Plot", min_value=1, max_value=max_row_count, value = max_row_count, step=10)
+                num_points = st.number_input("Select Number of Points to Plot", min_value=1, max_value=max_row_count, step=10)
 
                 if st.button("Display  Result"):
                     Interpolated_data = pd.read_csv('Interpolated_data.csv')
