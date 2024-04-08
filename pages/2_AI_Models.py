@@ -184,11 +184,11 @@ def get_training_config(model_option, selected_classifier_or_regressor):
             )
         with col2:
             no_of_layers = st.number_input(
-                "Number of hidden layers", min_value=10, max_value=100, step=5
+                "Number of hidden layers", min_value=1, max_value=100, step=5
             )
         with col3:
             no_of_neurons = st.number_input(
-                "Number of neurons", min_value=100, max_value=500, step=10
+                "Number of neurons", min_value=10, max_value=500, step=10
             )
 
         return NeuralNetworkModel(

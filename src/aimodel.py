@@ -143,7 +143,7 @@ class NeuralNetworkModel(BaseMLModel):
             hidden_layer_sizes=(no_of_layers, no_of_neurons),
             alpha=0.001,
             solver="lbfgs",
-            max_iter=100000,
+            max_iter=10000000,
             random_state=1,
             early_stopping=True,
         )
