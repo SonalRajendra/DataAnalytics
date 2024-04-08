@@ -1,5 +1,4 @@
 import os
-
 import pandas as pd
 import seaborn as sns
 import streamlit as st
@@ -386,6 +385,9 @@ def get_evaluation(model, data_processor_split, problem_type):
 
 
 def get_heatmap(df: pd.DataFrame):
+    """
+    Plotting the heatmap to check correlation
+    """
     st.subheader("Correlation between variables")
     try:
         fig = sns.heatmap(df.corr(), ax=plt.subplots()[1])
@@ -398,6 +400,9 @@ def get_heatmap(df: pd.DataFrame):
 
 
 def get_distribution(df):
+    """
+    Plotting the data distribution
+    """    
     st.subheader("Data Distribution")
     df_num = df.select_dtypes(include=["float64", "int64"])
     df_num.hist(
